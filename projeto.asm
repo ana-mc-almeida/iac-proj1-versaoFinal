@@ -222,7 +222,7 @@ inicia_linhas:
 	MOV R1, LINHA_TECLADO        ; linha a testar no teclado
 espera_tecla:                 ; neste ciclo espera - se até uma tecla ser premida
 	
-	YIELD                        ; este ciclo é potencialmente bloqueante, pelo que tem de
+	WAIT                        ; este ciclo é potencialmente bloqueante, pelo que tem de
 	; ter um ponto de fuga (aqui pode comutar para outro processo)
 	
 	SHR R1, 1                    ; divide por 2 para passar para a linha anterior
