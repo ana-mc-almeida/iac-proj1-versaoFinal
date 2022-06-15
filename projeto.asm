@@ -161,7 +161,8 @@ loop_bonecos:
 	
 	; o resto do programa principal é também um processo (neste caso, trata dos displays)
 	
-	MOV R2, 0                    ; valor do contador, cujo valor vai ser mostrado nos displays
+    CALL gera_aleatorio
+	;MOV R2, 0                    ; valor do contador, cujo valor vai ser mostrado nos displays
 	MOV R0, DISPLAYS             ; endereço do periférico que liga aos displays
 atualiza_display:
 	MOVB [R0], R2                ; mostra o valor do contador nos displays
@@ -176,18 +177,18 @@ obtem_tecla:
 	CMP R1, R6                   ; é a coluna da tecla 0?
 	JZ testa_0
 	
-    MOV R6, TECLA_E
+	MOV R6, TECLA_E
 	CMP R1, R6                   ; é a coluna da tecla 0?
 	JZ testa_E
-
-    MOV R6, TECLA_C
+	
+	MOV R6, TECLA_C
 	CMP R1, R6                   ; é a coluna da tecla 0?
 	JZ testa_C
 	
 testa_D:
 	SUB R2, 1                    ; diminui o contador
 	JMP atualiza_display         ; processo do programa principal nunca termina
-
+	
 testa_0:
 	MOV R1, 0                    ; cenário de fundo número 0
 	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
@@ -196,7 +197,7 @@ testa_0:
 testa_C:
 	ADD R2, 1                    ; aumenta o contador
 	JMP atualiza_display
-
+	
 testa_E:
 	MOV R1, 1                    ; cenário de fundo número 0
 	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
@@ -222,7 +223,7 @@ inicia_linhas:
 	MOV R1, LINHA_TECLADO        ; linha a testar no teclado
 espera_tecla:                 ; neste ciclo espera - se até uma tecla ser premida
 	
-	WAIT                        ; este ciclo é potencialmente bloqueante, pelo que tem de
+	WAIT                         ; este ciclo é potencialmente bloqueante, pelo que tem de
 	; ter um ponto de fuga (aqui pode comutar para outro processo)
 	
 	SHR R1, 1                    ; divide por 2 para passar para a linha anterior
@@ -233,7 +234,7 @@ espera_tecla:                 ; neste ciclo espera - se até uma tecla ser premi
 	CMP R0, 0                    ; há tecla premida?
 	JZ espera_tecla              ; se nenhuma tecla premida, repete
 	
-    MOV R10, R1                  		; memoriza a linha pressionada
+	MOV R10, R1                  ; memoriza a linha pressionada
 	MOV R5, R1
 	CALL converte_1248_to_0123   ; converter linha de 1, 2, 4 e 8 para 0, 1, 2, 3
 	MOV R1, R8
@@ -256,7 +257,7 @@ ha_tecla:                     ; neste ciclo espera - se até NENHUMA tecla estar
 	YIELD                        ; este ciclo é potencialmente bloqueante, pelo que tem de
 	; ter um ponto de fuga (aqui pode comutar para outro processo)
 	
-	MOV R1, R10        ; testar a linha 4 (R1 tinha sido alterado)
+	MOV R1, R10                  ; testar a linha 4 (R1 tinha sido alterado)
 	MOVB [R2], R1                ; escrever no periférico de saída (linhas)
 	MOVB R0, [R3]                ; ler do periférico de entrada (colunas)
 	AND R0, R5                   ; elimina bits para além dos bits 0 - 3
@@ -521,3 +522,12 @@ rot_int_3:
 	; o dobro do número da interrupção, pois a tabela é de WORDs
 	POP R1
 	RFE
+	
+	
+gera_aleatorio:
+	PUSH R3
+	MOV R3, TEC_COL              ; endereço do periférico das colunas
+	MOVB R2, [R3]                ; ler do periférico de entrada (colunas)
+	SHR R2, 2               ; FALTA TIRAR O TAMANHO MÁXIMO DO METEORO
+	POP R3
+	RET
