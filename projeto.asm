@@ -161,8 +161,8 @@ loop_bonecos:
 	
 	; o resto do programa principal é também um processo (neste caso, trata dos displays)
 	
-    CALL gera_aleatorio
-	;MOV R2, 0                    ; valor do contador, cujo valor vai ser mostrado nos displays
+	CALL gera_aleatorio
+	;MOV R2, 0 ; valor do contador, cujo valor vai ser mostrado nos displays
 	MOV R0, DISPLAYS             ; endereço do periférico que liga aos displays
 atualiza_display:
 	MOVB [R0], R2                ; mostra o valor do contador nos displays
@@ -461,6 +461,20 @@ sai_testa_limites:
 	POP R5
 	RET
 	
+	
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	; gera_aleatorio - Gera um número "aleatório" entre 0 e 7
+	;
+	; Retorna: R2 - número entre 0 e 7
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+gera_aleatorio:
+	PUSH R3
+	MOV R3, TEC_COL              ; endereço do periférico das colunas
+	MOVB R2, [R3]                ; ler do periférico de entrada (colunas)
+	SHR R2, 5                    ; FALTA TIRAR O TAMANHO MÁXIMO DO METEORO
+	POP R3
+	RET
+	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; ROT_INT_0 - Rotina de atendimento da interrupção 0
 	; Faz simplesmente uma escrita no LOCK que o processo boneco lê.
@@ -522,12 +536,3 @@ rot_int_3:
 	; o dobro do número da interrupção, pois a tabela é de WORDs
 	POP R1
 	RFE
-	
-	
-gera_aleatorio:
-	PUSH R3
-	MOV R3, TEC_COL              ; endereço do periférico das colunas
-	MOVB R2, [R3]                ; ler do periférico de entrada (colunas)
-	SHR R2, 2               ; FALTA TIRAR O TAMANHO MÁXIMO DO METEORO
-	POP R3
-	RET
