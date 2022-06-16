@@ -27,6 +27,8 @@
 	APAGA_ECRÃ EQU 6002H         ; endereço do comando para apagar todos os pixels já desenhados
 	SELECIONA_CENARIO_FUNDO EQU 6042H ; endereço do comando para selecionar uma imagem de fundo
 	SEL_ECRA EQU 6004H           ; para selecionar o ecrã onde vai ser desenhado o objeto
+	SELECIONA_SOM EQU 605AH      ; endereço do comando para selecionar um som de fundo
+	
 	
 	DISPLAYS EQU 0A000H          ; endereço do periférico que liga aos displays
 	TEC_LIN EQU 0C000H           ; endereço das linhas do teclado (periférico POUT - 2)
@@ -52,6 +54,9 @@
 	
 	LINHA_INICIAL_METEORO EQU 0  ; linha do meteoro
 	COLUNA_INICIAL_METEORO EQU 30 ; coluna do meteoro
+	
+	MIN_LINHA EQU 0
+	MAX_LINHA EQU 31
 	
 	MIN_COLUNA EQU 0             ; número da coluna mais à esquerda que o objeto pode ocupar
 	MAX_COLUNA EQU 63            ; número da coluna mais à direita que o objeto pode ocupar
@@ -80,6 +85,8 @@
 	
 	ATRASO_ROVER EQU 7
 	MAX_ALCANCE_MISSIL EQU 7
+	
+	NIVEIS_METEORO EQU 08H
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; * Cores
@@ -208,6 +215,20 @@ DEF_METEORO_MAU_5:            ; tabela que define o meteoro mau (cor, largura, p
 	WORD COR_VERMELHA, 0, COR_VERMELHA, 0, COR_VERMELHA
 	WORD COR_VERMELHA, 0, 0, 0, COR_VERMELHA
 	
+DEF_METEOROS_MAUS:
+	WORD DEF_METEORO_INICIO_1
+	WORD DEF_METEORO_INICIO_2
+	WORD DEF_METEORO_MAU_3
+	WORD DEF_METEORO_MAU_4
+	WORD DEF_METEORO_MAU_5
+	
+DEF_METEOROS_BONS:
+	WORD DEF_METEORO_INICIO_1
+	WORD DEF_METEORO_INICIO_2
+	WORD DEF_METEORO_BOM_3
+	WORD DEF_METEORO_BOM_4
+	WORD DEF_METEORO_BOM_5
+	
 DEF_EXPLOSAO:
 	WORD ECRA_EXPLOSAO
 	WORD LARGURA_EXPLOSAO
@@ -261,12 +282,9 @@ tab:
 	WORD rot_int_missil          ; rotina de atendimento da interrupção 1
 	WORD rot_int_energia         ; rotina de atendimento da interrupção 2
 	
-evento_int_bonecos:           ; LOCKs para cada rotina de interrupção comunicar ao processo
+evento_int_meteoros:          ; LOCKs para cada rotina de interrupção comunicar ao processo
 	; boneco respetivo que a interrupção ocorreu
 	LOCK 0                       ; LOCK para a rotina de interrupção 0
-	LOCK 0                       ; LOCK para a rotina de interrupção 1
-	LOCK 0                       ; LOCK para a rotina de interrupção 2
-	LOCK 0                       ; LOCK para a rotina de interrupção 3
 	
 tecla_carregada:
 	LOCK 0                       ; LOCK para o teclado comunicar aos restantes processos que tecla detetou
@@ -319,6 +337,7 @@ inicio:
 	
 	CALL rover                   ; cria o processo rover
 	CALL missil                  ; cria o processo missil
+	CALL meteoro
 	
 	
 	MOV R0, DISPLAYS             ; endereço do periférico que liga aos displays
@@ -495,6 +514,56 @@ move_rover:
 	JMP ciclo_rover              ; esta "rotina" nunca retorna porque nunca termina
 	; Se se quisesse terminar o processo, era deixar o processo chegar a um RET
 	
+	
+	
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	; Processo
+	;
+	; METEORO - Processo que desenha um meteoro e o move verticalmente, com
+	; temporização marcada pela interrupção 0
+	;
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	
+	PROCESS SP_inicial_meteoro   ; indicação de que a rotina que se segue é um processo, 
+	; com indicação do valor para inicializar o SP
+meteoro:                      ; processo que implementa o comportamento do boneco
+	; desenha o boneco na sua posição inicial
+	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
+	MOV R2, COLUNA_INICIAL_METEORO ; coluna do meteoro
+	MOV R3, - 2                  ;count para ler o tamanho do meteoro
+	MOV R7, 0                    ; count para ver se é linha multipla de 3
+	
+aumenta_meteoro:
+	ADD R3, 2
+ciclo_meteoro:
+	
+	YIELD
+	
+	MOV R5, DEF_METEOROS_MAUS    ; endereço da tabela que define o boneco
+	MOV R4, [R5 + R3]            ; lê a tabela de meteoros
+	CALL desenha_objeto          ; desenha o boneco a partir da tabela
+	
+move_meteoro:                 ; neste ciclo o meteoro muda de posição
+	MOV R6, [evento_int_meteoros]
+	ADD R7, 1
+	MOV R8, 3
+	MOD R7, R8
+	CMP R7, 0
+	JNZ desce_meteoro
+	MOV R9, NIVEIS_METEORO
+	CMP R3, R9
+	JNZ aumenta_meteoro
+	JMP ciclo_meteoro
+	
+desce_meteoro:
+	CALL apaga_objeto
+	MOV R6, [R5 + R3]
+	ADD R6, 2
+	MOV R8, [R6]
+	CALL testa_limite_inferior
+	;ADD R8, + 1
+	ADD R1, 1
+	JMP ciclo_meteoro
 	
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -815,6 +884,18 @@ sai_testa_limites:            ; neste ciclo, para - se de testar se o rover cheg
 	RET
 	
 	
+testa_limite_inferior:        ; vê - se se o objeto chegou o limite inferior
+	PUSH R8                      ; suposto ser a altura do objeto
+	PUSH R1                      ; suposto ser a linha do meteoro
+	MOV R5, MAX_LINHA
+	ADD R8, R1
+	CMP R8, R5
+	JZ apaga_objeto
+	POP R1
+	POP R8
+	RET
+	
+	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; gera_aleatorio - Gera um número "aleatório" entre 0 e 7
 	;
@@ -851,10 +932,8 @@ rot_int_missil:
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 rot_int_meteoros:
 	PUSH R1
-	MOV R1, evento_int_bonecos
-	MOV [R1 + 2], R0             ; desbloqueia processo boneco (qualquer registo serve)
-	; O valor a somar ao R1 (base da tabela dos LOCKs) é
-	; o dobro do número da interrupção, pois a tabela é de WORDs
+	MOV R1, 1
+	MOV [evento_int_meteoros], R1 ; desbloqueia processo missil (qualquer registo serve)
 	POP R1
 	RFE
 	
