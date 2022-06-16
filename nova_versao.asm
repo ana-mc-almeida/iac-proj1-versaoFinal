@@ -39,6 +39,8 @@
 	INICIO_DISPLAY EQU 0100H     ; valor inicial do display
 	
 	N_BONECOS EQU 4              ; número de bonecos (até 4)
+
+    MODO EQU 0
 	
 	LINHA_BONECO_0 EQU 4         ; linha do boneco 0
 	LINHA_BONECO_1 EQU 12        ; linha do boneco 1
@@ -257,7 +259,8 @@ LINHA_METEORO: WORD LINHA_INICIAL_METEORO ; variável que indica a linha do Mete
 	
 	
 DISPLAY: WORD INICIO_DISPLAY  ; variável que indica o valor do display
-	
+
+JOGO: WORD MODO
 	
 linha_boneco:                 ; linha em que cada boneco está (inicializada com a linha inicial)
 	WORD LINHA_BONECO_0
@@ -306,7 +309,9 @@ dimui_energia_a_jogar:
 aumenta_energia_clicar:
 	LOCK 0
 	
-	
+modo_jogo:
+    LOCK 0
+
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; * Código
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -316,8 +321,6 @@ inicio:
 	
 	MOV BTE, tab                 ; inicializa BTE (registo de Base da Tabela de Exceções)
 	
-	MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
-	MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 	;MOV R1, 0 ; cenário de fundo número 0
 	;MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
 	MOV R7, 1                    ; valor a somar à coluna do boneco, para o movimentar
@@ -334,16 +337,22 @@ inicio:
 	CALL teclado                 ; cria o processo teclado
 	
 	CALL display_aumentar
-	CALL display_diminuir
+	CALL display_inicia
 	
 	CALL rover                   ; cria o processo rover
 	CALL missil                  ; cria o processo missil
 	CALL meteoro
 	
-	
+recomeca_jogo:
 	MOV R0, DISPLAYS             ; endereço do periférico que liga aos displays
-	MOV R2, [DISPLAY]
-	MOV [R0], R2
+	MOV R2, INICIO_DISPLAY
+    MOV [R0], R2
+
+    MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+	MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
+
+    MOV R0, MODO
+    MOV [JOGO], R0
 	
 obtem_tecla:
 	MOV R1, [tecla_carregada]    ; bloqueia neste LOCK até uma tecla ser carregada
@@ -364,11 +373,27 @@ obtem_tecla:
 	
 	
 testa_D:
-	MOV [aumenta_energia_clicar], R1
-	JMP obtem_tecla              ; processo do programa principal nunca termina
-	
+    MOV R2, 2
+    MOV R0, [JOGO]
+    CMP R2, R0
+    JZ sai_de_pausa
+    MOV R2, 2
+    MOV [JOGO], R2
+	JMP obtem_tecla         ; processo do programa principal nunca termina
+sai_de_pausa:
+    MOV R2, 1
+    MOV [JOGO], R2
+    JMP obtem_tecla
+
 testa_C:
-	JMP obtem_tecla              ; processo do programa principal nunca termina
+    MOV R2, 2
+    MOV R0, [JOGO]
+    CMP R2, R0
+    JZ recomeca_jogo
+    MOV R2, 1
+    MOV [JOGO], R2
+    MOV [modo_jogo], R2
+	JMP obtem_tecla 
 	
 clique_E:
 	MOV R2, 1
@@ -476,6 +501,7 @@ rover:                        ; processo que implementa o comportamento do bonec
 	MOV R1, LINHA_INICIAL_ROVER  ; linha do boneco
 	MOV R2, COLUNA_INICIAL_ROVER
 	MOV R5, 0                    ; inicializa o contador
+    MOV R6, [modo_jogo]
 	
 ciclo_rover:
 	MOV R4, DEF_ROVER            ; endereço da tabela que define o boneco
@@ -484,6 +510,15 @@ ciclo_rover:
 espera_movimento_rover:
 	MOV R3, [tecla_continuo]     ; lê o LOCK e bloqueia até o teclado escrever nele novamente
 	
+    MOV R10, 3
+    MOV R11, [JOGO]
+    CMP R10, R11
+    JZ move_rover_posicao_inicial
+    MOV R10, 2
+    MOV R11, [JOGO]
+    CMP R10, R11
+    JZ espera_movimento_rover
+
 	ADD R5, 1                    ; incrementa o contador
 	CMP R5, ATRASO_ROVER
 	JNZ espera_movimento_rover   ; não se vai mover enquanto não acabar o atraso
@@ -515,6 +550,16 @@ move_rover:
 	JMP ciclo_rover              ; esta "rotina" nunca retorna porque nunca termina
 	; Se se quisesse terminar o processo, era deixar o processo chegar a um RET
 	
+
+move_rover_posicao_inicial:
+    CALL apaga_objeto            ; apaga o boneco na sua posição corrente
+    MOV R5, 0                    ; inicializa o contador
+    MOV R1, 1
+    MOV R2, COLUNA_INICIAL_ROVER
+    MOV R1, LINHA_INICIAL_ROVER
+    MOV R10, 1
+    MOV [JOGO], R10
+    JMP ciclo_rover
 	
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -665,13 +710,20 @@ move_missil:
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	PROCESS SP_inicial_display_diminuir
 	
+display_inicia:
+    MOV R1, [modo_jogo]
+
 display_diminuir:
-	MOV R1, [dimui_energia_a_jogar]
-	JNZ diminui_em_decimal
+
+    MOV R1, [dimui_energia_a_jogar]
+    MOV R1, 2
+    MOV R11, [JOGO]
+    CMP R1, R11
+    JZ display_diminuir
+	JMP diminui_em_decimal
 	MOV R1, 0
 	MOV [dimui_energia_a_jogar], R1
 	JMP display_diminuir
-	
 diminui_em_decimal:
 	MOV R11, [DISPLAY]           ; guarda o valor atual do display
 	MOV R1, MASCARA
@@ -716,9 +768,7 @@ vai_diminuir:
 	
 display_aumentar:
 	MOV R1, [aumenta_energia_clicar]
-	CMP R1, 0
 	JNZ aumenta_em_decimal
-	MOV R1, 0
 	MOV [aumenta_energia_clicar], R1
 	RET
 	
@@ -737,6 +787,10 @@ testa_para_100_aumentar:
 	MOV R6, 09H
 	CMP R1, R6
 	JZ vai_aumentar
+    MOV R6, 010H
+    CMP R1, R6
+	JZ vai_aumentar
+	RET
 	RET
 vai_aumentar:
 	MOV R11, 0100H
