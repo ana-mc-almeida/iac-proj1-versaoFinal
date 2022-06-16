@@ -56,7 +56,7 @@
 	COLUNA_INICIAL_METEORO EQU 30 ; coluna do meteoro
 	
 	MIN_LINHA EQU 0
-	MAX_LINHA EQU 31
+	MAX_LINHA EQU 32
 	
 	MIN_COLUNA EQU 0             ; número da coluna mais à esquerda que o objeto pode ocupar
 	MAX_COLUNA EQU 63            ; número da coluna mais à direita que o objeto pode ocupar
@@ -549,10 +549,11 @@ ciclo_meteoro:
 move_meteoro:                 ; neste ciclo o meteoro muda de posição
 	MOV R6, [evento_int_meteoros]
 	ADD R7, 1
+	CALL desce_meteoro
 	MOV R8, 3
 	MOD R7, R8
 	CMP R7, 0
-	CALL desce_meteoro
+	JNZ ciclo_meteoro
 	MOV R9, NIVEIS_METEORO
 	CMP R3, R9
 	JNZ aumenta_meteoro
