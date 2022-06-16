@@ -294,9 +294,18 @@ inicio:
 	
 	CALL gera_aleatorio
 
+recomeca_jogo:
+
 	MOV R0, DISPLAYS             ; endereço do periférico que liga aos displays
-	MOV R2, [DISPLAY]
+	MOV R2, INICIO_DISPLAY
+    MOV [DISPLAY], R2
     MOV [R0], R2
+
+    MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+	MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
+
+    MOV R0, MODO
+    MOV [JOGO], R0
 
 obtem_tecla:
 	MOV R1, [tecla_carregada]    ; bloqueia neste LOCK até uma tecla ser carregada
