@@ -1,13 +1,16 @@
-teclado a detetar todas as teclas com processos enquanto cai um meteoro ---> como tinhamos + como eles fizeram + adicionar sempre 1 à tecla que já tinhamos 
 fundos (começar, suspender/continuar e terminar o jogo)
 
-desenhar o meteoro no seu propio ecra de pixeis
 
 colisao meteoro missel / rover
 
-escolhar pseudoaleatorias
 
 displays de hexadecimal para decimal
 diminuir display em 5% de 3 em 3 segundos
 
 verificar se a energia chega a 0
+
+JÁ FEITO:
+
+teclado a detetar todas as teclas com processos enquanto cai um meteoro ---> como tinhamos + como eles fizeram + adicionar sempre 1 à tecla que já tinhamos 
+escolhar pseudoaleatorias
+desenhar o meteoro no seu propio ecra de pixeis
