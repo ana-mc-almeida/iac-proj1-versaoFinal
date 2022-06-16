@@ -532,6 +532,7 @@ meteoro:                      ; processo que implementa o comportamento do bonec
 	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
 	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
 	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
+	MOV [COLUNA_METEORO], R2     ; guarda o valor da coluna do meteoro
 	MOV R3, - 2                  ;count para ler o tamanho do meteoro
 	MOV R7, 0                    ; count para ver se é linha multipla de 3
 	call define_tipo_meteoro
@@ -582,6 +583,7 @@ reinicia_meteoro:
 	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
 	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
 	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
+	MOV [COLUNA_METEORO], R2     ; guarda o valor da coluna do meteoro
 	MOV R3, - 2                  ;count para ler o tamanho do meteoro
 	MOV R7, 0                    ; count para ver se é linha multipla de 3
 	call define_tipo_meteoro
@@ -590,6 +592,7 @@ proxima_linha:
 	ADD R1, 1
 fim_testa_limites_inferior:
 	;POP R1
+	MOV [LINHA_METEORO], R1
 	POP R8
 	RET
 	
