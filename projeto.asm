@@ -52,22 +52,33 @@
 	MIN_COLUNA EQU 0             ; número da coluna mais à esquerda que o objeto pode ocupar
 	MAX_COLUNA EQU 63            ; número da coluna mais à direita que o objeto pode ocupar
 	
-	;LARGURA EQU 5 ; largura do boneco
-	;COR_PIXEL EQU 0FF00H ; cor do pixel: vermelho em ARGB (opaco e vermelho no máximo, verde e azul a 0)
-	
 	LARGURA_ROVER EQU 5          ; largura do rover
 	ALTURA_ROVER EQU 4           ; altura do rover
-	LARGURA_METEORO_MAU EQU 5    ; largura do meteoro mau
-	ALTURA_METEORO_MAU EQU 5     ; altura do meteoro mau
+	LARGURA_METEORO_1 EQU 1
+	ALTURA_METEORO_1 EQU 1       ; altura do meteoro nível 5
+	LARGURA_METEORO_2 EQU 2
+	ALTURA_METEORO_2 EQU 2       ; altura do meteoro nível 5
+	LARGURA_METEORO_3 EQU 3
+	ALTURA_METEORO_3 EQU 3       ; altura do meteoro nível 5
+	LARGURA_METEORO_4 EQU 4
+	ALTURA_METEORO_4 EQU 4       ; altura do meteoro nível 5
+	LARGURA_METEORO_5 EQU 5      ; largura do meteoro nível 5
+	ALTURA_METEORO_5 EQU 5       ; altura do meteoro nível 5
+	LARGURA_DISPARO EQU 5
+	ALTURA_DISPARO EQU 5
 	
 	ECRA_ROVER EQU 0             ; ecrã especificado para o Rover
 	ECRA_METEORO EQU 1           ; ecrã especificado para o Meteoro
+	ECRA_DISPARO EQU 2
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; * Cores
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	COR_AMARELA EQU 0FFF0H       ; amarelo em ARGB (opaco, vermelho no máximo, verde no máximo e azul a 0)
+	COR_AMARELA EQU 0FFF0H       ; amarelo em ARGB (opaco, amarelo no máximo, verde no máximo e azul a 0)
 	COR_VERMELHA EQU 0FF00H      ; vermelho em ARGB (opaco, vermelho no máximo, verde e azul a 0)
+	COR_CINZENTO EQU 0F99AH      ; cinzento em ARGB
+	COR_VERDE EQU 0F0B3H         ; verde em ARGB
+	COR_VERDE_AGUA EQU 0F2FBH    ; verde_agua em ARGB
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; * Teclas com Funções
@@ -122,15 +133,84 @@ DEF_ROVER:                    ; tabela que define o Rover (cor, largura, pixels)
 	WORD COR_AMARELA, COR_AMARELA, COR_AMARELA, COR_AMARELA, COR_AMARELA
 	WORD 0, COR_AMARELA, 0, COR_AMARELA, 0
 	
-DEF_METEORO_MAU:              ; tabela que define o meteoro mau (cor, largura, pixels)
+DEF_METEORO_INICIO_1:
 	WORD ECRA_METEORO            ; ecrã do meteoro
-	WORD LARGURA_METEORO_MAU     ; largura do Meteoro Mau
-	WORD ALTURA_METEORO_MAU      ; altura do Meteoro Mau
+	WORD LARGURA_METEORO_1       ; largura do Meteoro Mau
+	WORD ALTURA_METEORO_1        ; altura do Meteoro Mau
+	WORD COR_CINZENTO
+	WORD COR_CINZENTO
+	
+DEF_METEORO_INICIO_2:
+	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD LARGURA_METEORO_2       ; largura do Meteoro Mau
+	WORD ALTURA_METEORO_2        ; altura do Meteoro Mau
+	WORD COR_CINZENTO, COR_CINZENTO
+	WORD COR_CINZENTO, COR_CINZENTO
+	
+	
+DEF_METEORO_BOM_3:
+	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD LARGURA_METEORO_3       ; largura do Meteoro Mau
+	WORD ALTURA_METEORO_3        ; altura do Meteoro Mau
+	WORD 0, COR_VERDE, 0
+	WORD COR_VERDE, COR_VERDE, COR_VERDE
+	WORD 0, COR_VERDE, 0
+	
+DEF_METEORO_BOM_4:
+	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD LARGURA_METEORO_4       ; largura do Meteoro Mau
+	WORD ALTURA_METEORO_4        ; altura do Meteoro Mau
+	WORD 0, COR_VERDE, COR_VERDE, 0
+	WORD COR_VERDE, COR_VERDE, COR_VERDE, COR_VERDE
+	WORD COR_VERDE, COR_VERDE, COR_VERDE, COR_VERDE
+	WORD 0, COR_VERDE, COR_VERDE, 0
+	
+DEF_METEORO_BOM_5:            ; tabela que define o meteoro mau (cor, largura, pixels)
+	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD LARGURA_METEORO_5       ; largura do Meteoro Mau
+	WORD ALTURA_METEORO_5
+	WORD 0, COR_VERDE, COR_VERDE, COR_VERDE, 0
+	WORD COR_VERDE, COR_VERDE, COR_VERDE, COR_VERDE, COR_VERDE ; altura do Meteoro Mau
+	WORD COR_VERDE, COR_VERDE, COR_VERDE, COR_VERDE, COR_VERDE
+	WORD COR_VERDE, COR_VERDE, COR_VERDE, COR_VERDE, COR_VERDE
+	WORD 0, COR_VERDE, COR_VERDE, COR_VERDE, 0
+	
+DEF_METEORO_MAU_3:
+	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD LARGURA_METEORO_3       ; largura do Meteoro Mau
+	WORD ALTURA_METEORO_3        ; altura do Meteoro Mau
+	WORD COR_VERMELHA, 0, COR_VERMELHA
+	WORD 0, COR_VERMELHA, 0
+	WORD COR_VERMELHA, 0, COR_VERMELHA
+	
+DEF_METEORO_MAU_4:
+	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD LARGURA_METEORO_4       ; largura do Meteoro Mau
+	WORD ALTURA_METEORO_4        ; altura do Meteoro Mau
+	WORD COR_VERMELHA, 0, 0, COR_VERMELHA
+	WORD COR_VERMELHA, 0, 0, COR_VERMELHA
+	WORD 0, COR_VERMELHA, COR_VERMELHA, 0
+	WORD COR_VERMELHA, 0, 0, COR_VERMELHA
+	
+DEF_METEORO_MAU_5:            ; tabela que define o meteoro mau (cor, largura, pixels)
+	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD LARGURA_METEORO_5       ; largura do Meteoro Mau
+	WORD ALTURA_METEORO_5        ; altura do Meteoro Mau
 	WORD COR_VERMELHA, 0, 0, 0, COR_VERMELHA
 	WORD COR_VERMELHA, 0, COR_VERMELHA, 0, COR_VERMELHA
 	WORD 0, COR_VERMELHA, COR_VERMELHA, COR_VERMELHA, 0
 	WORD COR_VERMELHA, 0, COR_VERMELHA, 0, COR_VERMELHA
 	WORD COR_VERMELHA, 0, 0, 0, COR_VERMELHA
+	
+DEF_DISPARO:
+	WORD ECRA_DISPARO
+	WORD LARGURA_DISPARO
+	WORD ALTURA_DISPARO
+	WORD 0, COR_VERDE_AGUA, 0, COR_VERDE_AGUA, 0
+	WORD COR_VERDE_AGUA, 0, COR_VERDE_AGUA, 0, COR_VERDE_AGUA
+	WORD 0, COR_VERDE_AGUA, 0, COR_VERDE_AGUA, 0
+	WORD COR_VERDE_AGUA, 0, COR_VERDE_AGUA, 0, COR_VERDE_AGUA
+	WORD 0, COR_VERDE_AGUA, 0, COR_VERDE_AGUA, 0
 	
 COLUNA_ROVER: WORD COLUNA_INICIAL_ROVER ; variável que indica a coluna do Rover
 LINHA_ROVER: WORD LINHA_INICIAL_ROVER ; variável que indica a linha do Rover
@@ -320,7 +400,7 @@ ha_tecla:                     ; neste ciclo espera - se até NENHUMA tecla estar
 	
 	JNZ ha_tecla                 ; se ainda houver uma tecla premida, espera até não haver
 	
-	;JMP espera_tecla             ; esta "rotina" nunca retorna porque nunca termina
+	;JMP espera_tecla ; esta "rotina" nunca retorna porque nunca termina
 	; Se se quisesse terminar o processo, era deixar o processo chegar a um RET
 	
 	
@@ -581,7 +661,7 @@ posicao_rover:
 posicao_meteoro:
 	MOV R1, [LINHA_METEORO]      ; linha do meteoro
 	MOV R2, [COLUNA_METEORO]     ; coluna do meteoro
-	MOV R4, DEF_METEORO_MAU      ; endereço da tabela que define o meteoro
+	MOV R4, DEF_METEORO_MAU_5      ; endereço da tabela que define o meteoro
 	RET
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
