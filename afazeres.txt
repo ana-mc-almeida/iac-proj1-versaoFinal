@@ -2,7 +2,7 @@ fundos (começar, suspender/continuar e terminar o jogo)
 
 Perde quando:
     colisao meteoro missel / rover
-    meteoro chega ao fim 
+    energia chega a 0
 
 
 verificar se a energia chega a 0
