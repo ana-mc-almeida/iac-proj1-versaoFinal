@@ -46,6 +46,9 @@
 	LINHA_INICIAL_ROVER EQU 27   ; linha do rover
 	COLUNA_INICIAL_ROVER EQU 30  ; coluna do rover
 	
+	LINHA_INICIAL_MISSIL EQU 27  ; linha do rover
+	COLUNA_INICIAL_MISSIL EQU 30 ; coluna do rover
+	
 	LINHA_INICIAL_METEORO EQU 0  ; linha do meteoro
 	COLUNA_INICIAL_METEORO EQU 30 ; coluna do meteoro
 	
@@ -64,34 +67,38 @@
 	ALTURA_METEORO_4 EQU 4       ; altura do meteoro nível 5
 	LARGURA_METEORO_5 EQU 5      ; largura do meteoro nível 5
 	ALTURA_METEORO_5 EQU 5       ; altura do meteoro nível 5
-	LARGURA_DISPARO EQU 5
-	ALTURA_DISPARO EQU 5
+	LARGURA_EXPLOSAO EQU 5
+	ALTURA_EXPLOSAO EQU 5
+	LARGURA_MISSIL EQU 1
+	ALTURA_MISSIL EQU 1
 	
 	ECRA_ROVER EQU 0             ; ecrã especificado para o Rover
 	ECRA_METEORO EQU 1           ; ecrã especificado para o Meteoro
-	ECRA_DISPARO EQU 2
+	ECRA_EXPLOSAO EQU 2
+	ECRA_MISSIL EQU 2
 	
 	ATRASO_ROVER EQU 7
+	MAX_ALCANCE_MISSIL EQU 7
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; * Cores
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	COR_AMARELA EQU 0FFF0H       ; amarelo em ARGB (opaco, amarelo no máximo, verde no máximo e azul a 0)
 	COR_VERMELHA EQU 0FF00H      ; vermelho em ARGB (opaco, vermelho no máximo, verde e azul a 0)
-	COR_CINZENTO EQU 0F99AH      ; cinzento em ARGB
+	COR_CINZENTO EQU 0799AH      ; cinzento em ARGB
 	COR_VERDE EQU 0F0B3H         ; verde em ARGB
 	COR_VERDE_AGUA EQU 0F2FBH    ; verde_agua em ARGB
+	COR_ROXA EQU 0FC3FH          ; roxo
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; * Teclas com Funções
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	TECLA_0 EQU 01H              ; tecla 0
-	TECLA_2 EQU 03H              ; tecla 2
-	TECLA_3 EQU 04H              ; tecla 3
-	TECLA_5 EQU 06H              ; tecla 5
-	TECLA_9 EQU 0AH              ; tecla 9
-	TECLA_D EQU 0EH              ; tecla D
-	TECLA_C EQU 0DH              ; tecla C
+	TECLA_0 EQU 01H              ; tecla 0 - > mover o rover para a esquerda
+	TECLA_1 EQU 02H              ; tecla 2 - > disparar o missil
+	TECLA_2 EQU 03H              ; tecla 2 - > mover o rover para a direita
+	TECLA_C EQU 0DH              ; tecla C - > começar o jogo
+	TECLA_D EQU 0EH              ; tecla D - > suspender / continuar o jogo
+	TECLA_E EQU 0FH              ; tecla E - > terminar o jogo
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; * Dados
@@ -110,20 +117,13 @@ SP_inicial_teclado:           ; este é o endereço com que o SP deste processo 
 SP_inicial_rover:             ; este é o endereço com que o SP deste processo deve ser inicializado
 	
 	STACK 100H                   ; espaço reservado para a pilha do processo "boneco", instância 1
-SP_inicial_boneco_1:          ; este é o endereço com que o SP deste processo deve ser inicializado
+SP_inicial_missil:            ; este é o endereço com que o SP deste processo deve ser inicializado
 	
 	STACK 100H                   ; espaço reservado para a pilha do processo "boneco", instância 2
-SP_inicial_boneco_2:          ; este é o endereço com que o SP deste processo deve ser inicializado
+SP_inicial_meteoro:           ; este é o endereço com que o SP deste processo deve ser inicializado
 	
 	STACK 100H                   ; espaço reservado para a pilha do processo "boneco", instância 3
-SP_inicial_boneco_3:          ; este é o endereço com que o SP deste processo deve ser inicializado
-	
-	; tabela com os SP iniciais de cada processo "boneco"
-boneco_SP_tab:
-	WORD SP_inicial_rover
-	WORD SP_inicial_boneco_1
-	WORD SP_inicial_boneco_2
-	WORD SP_inicial_boneco_3
+SP_inicial_energia:           ; este é o endereço com que o SP deste processo deve ser inicializado
 	
 	
 DEF_ROVER:                    ; tabela que define o Rover (cor, largura, pixels)
@@ -204,18 +204,27 @@ DEF_METEORO_MAU_5:            ; tabela que define o meteoro mau (cor, largura, p
 	WORD COR_VERMELHA, 0, COR_VERMELHA, 0, COR_VERMELHA
 	WORD COR_VERMELHA, 0, 0, 0, COR_VERMELHA
 	
-DEF_DISPARO:
-	WORD ECRA_DISPARO
-	WORD LARGURA_DISPARO
-	WORD ALTURA_DISPARO
+DEF_EXPLOSAO:
+	WORD ECRA_EXPLOSAO
+	WORD LARGURA_EXPLOSAO
+	WORD ALTURA_EXPLOSAO
 	WORD 0, COR_VERDE_AGUA, 0, COR_VERDE_AGUA, 0
 	WORD COR_VERDE_AGUA, 0, COR_VERDE_AGUA, 0, COR_VERDE_AGUA
 	WORD 0, COR_VERDE_AGUA, 0, COR_VERDE_AGUA, 0
 	WORD COR_VERDE_AGUA, 0, COR_VERDE_AGUA, 0, COR_VERDE_AGUA
 	WORD 0, COR_VERDE_AGUA, 0, COR_VERDE_AGUA, 0
 	
+DEF_MISSIL:
+	WORD ECRA_MISSIL
+	WORD LARGURA_MISSIL
+	WORD ALTURA_MISSIL
+	WORD COR_ROXA
+	
 COLUNA_ROVER: WORD COLUNA_INICIAL_ROVER ; variável que indica a coluna do Rover
 LINHA_ROVER: WORD LINHA_INICIAL_ROVER ; variável que indica a linha do Rover
+	
+COLUNA_MISSIL: WORD COLUNA_INICIAL_ROVER ; variável que indica a coluna do Rover
+LINHA_MISSIL: WORD LINHA_INICIAL_ROVER ; variável que indica a linha do Rover
 	
 COLUNA_METEORO: WORD COLUNA_INICIAL_METEORO ; variável que indica a coluna do Meteoro
 LINHA_METEORO: WORD LINHA_INICIAL_METEORO ; variável que indica a linha do Meteoro
@@ -241,10 +250,9 @@ sentido_movimento:            ; sentido movimento de cada boneco ( + 1 para a di
 	
 	; Tabela das rotinas de interrupção
 tab:
-	WORD rot_int_0               ; rotina de atendimento da interrupção 0
-	WORD rot_int_1               ; rotina de atendimento da interrupção 1
-	WORD rot_int_2               ; rotina de atendimento da interrupção 2
-	WORD rot_int_3               ; rotina de atendimento da interrupção 3
+	WORD rot_int_meteoros        ; rotina de atendimento da interrupção dos meteoros
+	WORD rot_int_missil          ; rotina de atendimento da interrupção 1
+	WORD rot_int_energia         ; rotina de atendimento da interrupção 2
 	
 evento_int_bonecos:           ; LOCKs para cada rotina de interrupção comunicar ao processo
 	; boneco respetivo que a interrupção ocorreu
@@ -259,6 +267,12 @@ tecla_carregada:
 tecla_continuo:
 	LOCK 0                       ; LOCK para o teclado comunicar aos restantes processos que tecla detetou, 
 	; enquanto a tecla estiver carregada
+	
+missil_disparado:
+	LOCK 0
+	
+missil_movimenta:
+	LOCK 0
 	
 	
 	
@@ -289,18 +303,22 @@ inicio:
 	
 	CALL teclado                 ; cria o processo teclado
 	
-	CALL rover
-	
+	CALL rover                   ; cria o processo rover
+	CALL missil                  ; cria o processo missil
 	
 	; o resto do programa principal é também um processo (neste caso, trata dos displays)
 	
-	CALL gera_aleatorio
-	;MOV R2, 0 ; valor do contador, cujo valor vai ser mostrado nos displays
+	;CALL gera_aleatorio
+	MOV R2, 0                    ; valor do contador, cujo valor vai ser mostrado nos displays
 	MOV R0, DISPLAYS             ; endereço do periférico que liga aos displays
 atualiza_display:
 	MOVB [R0], R2                ; mostra o valor do contador nos displays
 obtem_tecla:
 	MOV R1, [tecla_carregada]    ; bloqueia neste LOCK até uma tecla ser carregada
+	
+	MOV R6, TECLA_E
+	CMP R1, R6                   ; é a coluna da tecla 0?
+	JZ clique_E
 	
 	MOV R6, TECLA_C
 	CMP R1, R6                   ; é a coluna da tecla 0?
@@ -320,6 +338,10 @@ testa_C:
 	ADD R2, 1                    ; aumenta o contador
 	JMP atualiza_display
 	
+clique_E:
+	MOV R2, 1
+	MOV [missil_disparado], R2   ; desbloqueia processo missil (qualquer registo serve)
+	JMP obtem_tecla
 	
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -410,8 +432,8 @@ ha_tecla:                     ; neste ciclo espera - se até NENHUMA tecla estar
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; Processo
 	;
-	; BONECO - Processo que desenha um boneco e o move horizontalmente, com
-	; temporização marcada pela interrupção 0
+	; ROVER - Processo que desenha o rover e o move horizontalmente, 
+	; dependo das teclas pressionas pelo utilizador
 	;
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	
@@ -423,15 +445,16 @@ rover:                        ; processo que implementa o comportamento do bonec
 	MOV R2, COLUNA_INICIAL_ROVER
 	MOV R5, 0                    ; inicializa o contador
 	
-ciclo_boneco:
+ciclo_rover:
 	MOV R4, DEF_ROVER            ; endereço da tabela que define o boneco
+	MOV [COLUNA_ROVER], R2       ; atualiza a coluna atual do rover
 	CALL desenha_objeto          ; desenha o boneco a partir da tabela
-espera_movimento:
+espera_movimento_rover:
 	MOV R3, [tecla_continuo]     ; lê o LOCK e bloqueia até o teclado escrever nele novamente
 	
 	ADD R5, 1                    ; incrementa o contador
 	CMP R5, ATRASO_ROVER
-	JNZ espera_movimento         ; não se vai mover enquanto não acabar o atraso
+	JNZ espera_movimento_rover   ; não se vai mover enquanto não acabar o atraso
 	
 	MOV R5, 0                    ; reiniciar o contador
 	
@@ -439,13 +462,11 @@ espera_movimento:
 	CMP R3, R6                   ; é a coluna da tecla 0?
 	JZ move_rover_esquerda
 	
-	
 	MOV R6, TECLA_2
 	CMP R3, R6                   ; é a coluna da tecla 2?
 	JZ move_rover_direita
 	
-	
-	JMP espera_movimento         ; se não é, ignora e continua à espera
+	JMP espera_movimento_rover   ; se não é, ignora e continua à espera
 	
 move_rover_esquerda:          ; neste ciclo vê se é possível movimentar o obejto para a esquerda
 	MOV R7, - 1                  ; desloca o objeto para a esquerda
@@ -459,9 +480,59 @@ move_rover:
 	MOV R6, [R4]                 ; obtém a largura do boneco
 	CALL testa_limites           ; vê se chegou aos limites do ecrã e nesse caso inverte o sentido
 	ADD R2, R7                   ; para desenhar objeto na coluna seguinte (direita ou esquerda)
-	JMP ciclo_boneco             ; esta "rotina" nunca retorna porque nunca termina
+	JMP ciclo_rover              ; esta "rotina" nunca retorna porque nunca termina
 	; Se se quisesse terminar o processo, era deixar o processo chegar a um RET
 	
+	
+	
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	; Processo
+	;
+	; MISSIL - Processo que desenha o missil e o move verticalmente com
+	; temporização marcada pela interrupção 2 (missil)
+	;
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	
+	PROCESS SP_inicial_missil    ; indicação de que a rotina que se segue é um processo, 
+	; com indicação do valor para inicializar o SP
+missil:                       ; processo que implementa o comportamento do boneco
+	MOV R3, [missil_disparado]   ; lê o LOCK e bloqueia até o missil ser disparado
+	; desenha missil na sua posição inicial
+	
+	MOV R1, LINHA_INICIAL_ROVER  ; linha do missil
+	SUB R1, 1                    ; para começar em cima do rover
+	MOV [LINHA_MISSIL], R1       ; atualiza a variavel linha missil
+	
+	MOV R2, [COLUNA_ROVER]         ; coluna inicial do missil
+	ADD R2, 2                    ; para começar no meio do rover
+	MOV [COLUNA_MISSIL], R2      ; atualiza a variavel linha missil
+	
+	MOV R5, - 1                  ; inicializa o contador
+	
+ciclo_missil:
+	MOV R4, DEF_MISSIL           ; endereço da tabela que define o boneco
+	CMP R5, MAX_ALCANCE_MISSIL
+	JZ missil                    ; se já estiver no calnca máximo, o missil só desaparece
+	CALL desenha_objeto          ; desenha o boneco a partir da tabela
+espera_movimento_missil:
+	MOV R3, [missil_movimenta]   ; lê o LOCK e bloqueia até o missil ser movimentado
+	ADD R5, 1                    ; incrementa o contador
+	JMP move_cima
+	
+move_cima:                    ; neste ciclo vê se é possível movimentar o obejto para a esquerda
+	MOV R7, - 1                  ; desloca o objeto para a esquerda
+	JMP move_missil              ; testa se está dentro dos limites do ecrã
+move_baixo:
+	MOV R7, + 1                  ; desloca o objeto para a direita, se estiver dentro dos limites do ecrã
+	JMP move_missil              ; testa se está dentro dos limites do ecrã
+move_missil:
+	CALL apaga_objeto            ; apaga o boneco na sua posição corrente
+	ADD R4, 4                    ; endereço da altura do objeto
+	MOV R6, [R4]                 ; obtém a altura do missil
+	ADD R1, R7                   ; para desenhar objeto na coluna seguinte (direita ou esquerda)
+	MOV [LINHA_MISSIL], R1       ; atualiza a coluna atual do rover
+	JMP ciclo_missil             ; esta "rotina" nunca retorna porque nunca termina
+	; Se se quisesse terminar o processo, era deixar o processo chegar a um RET
 	
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -656,27 +727,27 @@ gera_aleatorio:
 	RET
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	; ROT_INT_0 - Rotina de atendimento da interrupção 0
+	; rot_int_missil - Rotina de atendimento da interrupção missil
 	; Faz simplesmente uma escrita no LOCK que o processo boneco lê.
 	; Como basta indicar que a interrupção ocorreu (não há mais
 	; informação a transmitir), basta a escrita em si, pelo que
 	; o registo usado, bem como o seu valor, é irrelevante
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-rot_int_0:
+rot_int_missil:
 	PUSH R1
-	MOV R1, evento_int_bonecos
-	MOV [R1 + 0], R0             ; desbloqueia processo boneco (qualquer registo serve)
+	MOV R1, 1
+	MOV [missil_movimenta], R1   ; desbloqueia processo missil (qualquer registo serve)
 	POP R1
 	RFE
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	; ROT_INT_1 - Rotina de atendimento da interrupção 1
+	; rot_int_meteoros - Rotina de atendimento da interrupção meteoros
 	; Faz simplesmente uma escrita no LOCK que o processo boneco lê.
 	; Como basta indicar que a interrupção ocorreu (não há mais
 	; informação a transmitir), basta a escrita em si, pelo que
 	; o registo usado, bem como o seu valor, é irrelevante
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-rot_int_1:
+rot_int_meteoros:
 	PUSH R1
 	MOV R1, evento_int_bonecos
 	MOV [R1 + 2], R0             ; desbloqueia processo boneco (qualquer registo serve)
@@ -686,32 +757,16 @@ rot_int_1:
 	RFE
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	; ROT_INT_2 - Rotina de atendimento da interrupção 2
+	; rot_int_energia - Rotina de atendimento da interrupção de energia
 	; Faz simplesmente uma escrita no LOCK que o processo boneco lê.
 	; Como basta indicar que a interrupção ocorreu (não há mais
 	; informação a transmitir), basta a escrita em si, pelo que
 	; o registo usado, bem como o seu valor, é irrelevante
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-rot_int_2:
+rot_int_energia:
 	PUSH R1
 	MOV R1, evento_int_bonecos
 	MOV [R1 + 4], R0             ; desbloqueia processo boneco (qualquer registo serve)
-	; O valor a somar ao R1 (base da tabela dos LOCKs) é
-	; o dobro do número da interrupção, pois a tabela é de WORDs
-	POP R1
-	RFE
-	
-	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	; ROT_INT_3 - Rotina de atendimento da interrupção 3
-	; Faz simplesmente uma escrita no LOCK que o processo boneco lê.
-	; Como basta indicar que a interrupção ocorreu (não há mais
-	; informação a transmitir), basta a escrita em si, pelo que
-	; o registo usado, bem como o seu valor, é irrelevante
-	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-rot_int_3:
-	PUSH R1
-	MOV R1, evento_int_bonecos
-	MOV [R1 + 6], R0             ; desbloqueia processo boneco (qualquer registo serve)
 	; O valor a somar ao R1 (base da tabela dos LOCKs) é
 	; o dobro do número da interrupção, pois a tabela é de WORDs
 	POP R1
