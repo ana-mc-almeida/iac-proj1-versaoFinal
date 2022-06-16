@@ -87,6 +87,7 @@
 	MAX_ALCANCE_MISSIL EQU 7
 	
 	NIVEIS_METEORO EQU 08H
+	DIVISAO_MAU_OU_BOM EQU 2
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; * Cores
@@ -533,6 +534,7 @@ meteoro:                      ; processo que implementa o comportamento do bonec
 	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
 	MOV R3, - 2                  ;count para ler o tamanho do meteoro
 	MOV R7, 0                    ; count para ver se é linha multipla de 3
+	call define_tipo_meteoro
 	
 aumenta_meteoro:
 	ADD R3, 2
@@ -540,7 +542,7 @@ ciclo_meteoro:
 	
 	YIELD
 	
-	MOV R5, DEF_METEOROS_MAUS    ; endereço da tabela que define o boneco
+	MOV R5, R10                  ; endereço da tabela que define o boneco
 	MOV R4, [R5 + R3]            ; lê a tabela de meteoros
 	CALL desenha_objeto          ; desenha o boneco a partir da tabela
 	
@@ -581,12 +583,27 @@ reinicia_meteoro:
 	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
 	MOV R3, - 2                  ;count para ler o tamanho do meteoro
 	MOV R7, 0                    ; count para ver se é linha multipla de 3
+	call define_tipo_meteoro
 	JMP fim_testa_limites_inferior
 proxima_linha:
 	ADD R1, 1
 fim_testa_limites_inferior:
 	;POP R1
 	POP R8
+	RET
+	
+define_tipo_meteoro:
+	PUSH R2
+	CALL gera_aleatorio
+	CMP R2, DIVISAO_MAU_OU_BOM
+	JGE meteoro_mau
+meteoro_bom:
+	MOV R10, DEF_METEOROS_BONS
+	JMP fim_tipo_meteoros
+meteoro_mau:
+	MOV R10, DEF_METEOROS_MAUS
+fim_tipo_meteoros:
+	POP R2
 	RET
 	
 	
