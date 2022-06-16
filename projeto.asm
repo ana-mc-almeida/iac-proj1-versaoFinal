@@ -71,6 +71,8 @@
 	ECRA_METEORO EQU 1           ; ecrã especificado para o Meteoro
 	ECRA_DISPARO EQU 2
 	
+	ATRASO_ROVER EQU 7
+	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; * Cores
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -419,12 +421,19 @@ rover:                        ; processo que implementa o comportamento do bonec
 	; desenha o boneco na sua posição inicial
 	MOV R1, LINHA_INICIAL_ROVER  ; linha do boneco
 	MOV R2, COLUNA_INICIAL_ROVER
+	MOV R5, 0                    ; inicializa o contador
 	
 ciclo_boneco:
 	MOV R4, DEF_ROVER            ; endereço da tabela que define o boneco
 	CALL desenha_objeto          ; desenha o boneco a partir da tabela
 espera_movimento:
 	MOV R3, [tecla_continuo]     ; lê o LOCK e bloqueia até o teclado escrever nele novamente
+	
+	ADD R5, 1                    ; incrementa o contador
+	CMP R5, ATRASO_ROVER
+	JNZ espera_movimento         ; não se vai mover enquanto não acabar o atraso
+	
+	MOV R5, 0                    ; reiniciar o contador
 	
 	MOV R6, TECLA_0
 	CMP R3, R6                   ; é a coluna da tecla 0?
@@ -632,37 +641,6 @@ sai_testa_limites:            ; neste ciclo, para - se de testar se o rover cheg
 	POP R5
 	RET
 	
-	
-	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	; posicao_rover - > Retorna as informações do rover
-	; Argumentos: nenhum
-	;
-	; Retorna:
-	; R1 - linha do rover
-	; R2 - coluna do rover
-	; R4 - endereço da tabela que define o rover
-	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	
-posicao_rover:
-	MOV R1, [LINHA_ROVER]        ; linha do rover
-	MOV R2, [COLUNA_ROVER]       ; coluna do rover
-	MOV R4, DEF_ROVER            ; endereço da tabela que define o rover
-	RET
-	
-	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	; posicao_meteoro - > Retorna as informações do meteoro
-	; Argumentos: nenhum
-	;
-	; Retorna:
-	; R1 - linha do meteoro
-	; R2 - coluna do meteoro
-	; R4 - endereço da tabela que define o meteoro
-	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-posicao_meteoro:
-	MOV R1, [LINHA_METEORO]      ; linha do meteoro
-	MOV R2, [COLUNA_METEORO]     ; coluna do meteoro
-	MOV R4, DEF_METEORO_MAU_5      ; endereço da tabela que define o meteoro
-	RET
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; gera_aleatorio - Gera um número "aleatório" entre 0 e 7
