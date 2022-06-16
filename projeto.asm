@@ -529,7 +529,8 @@ move_rover:
 meteoro:                      ; processo que implementa o comportamento do boneco
 	; desenha o boneco na sua posição inicial
 	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
-	MOV R2, COLUNA_INICIAL_METEORO ; coluna do meteoro
+	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
+	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
 	MOV R3, - 2                  ;count para ler o tamanho do meteoro
 	MOV R7, 0                    ; count para ver se é linha multipla de 3
 	
@@ -549,21 +550,44 @@ move_meteoro:                 ; neste ciclo o meteoro muda de posição
 	MOV R8, 3
 	MOD R7, R8
 	CMP R7, 0
-	JNZ desce_meteoro
+	CALL desce_meteoro
 	MOV R9, NIVEIS_METEORO
 	CMP R3, R9
 	JNZ aumenta_meteoro
 	JMP ciclo_meteoro
 	
 desce_meteoro:
+	PUSH R6
+	PUSH R8
 	CALL apaga_objeto
 	MOV R6, [R5 + R3]
 	ADD R6, 2
 	MOV R8, [R6]
 	CALL testa_limite_inferior
-	;ADD R8, + 1
+	POP R8
+	POP R6
+	RET
+	
+testa_limite_inferior:        ; vê - se se o objeto chegou o limite inferior
+	PUSH R8                      ; suposto ser a altura do objeto
+	;PUSH R1 ; suposto ser a linha do meteoro
+	MOV R5, MAX_LINHA
+	ADD R8, R1
+	CMP R8, R5
+	JNZ proxima_linha
+reinicia_meteoro:
+	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
+	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
+	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
+	MOV R3, - 2                  ;count para ler o tamanho do meteoro
+	MOV R7, 0                    ; count para ver se é linha multipla de 3
+	JMP fim_testa_limites_inferior
+proxima_linha:
 	ADD R1, 1
-	JMP ciclo_meteoro
+fim_testa_limites_inferior:
+	;POP R1
+	POP R8
+	RET
 	
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -884,16 +908,7 @@ sai_testa_limites:            ; neste ciclo, para - se de testar se o rover cheg
 	RET
 	
 	
-testa_limite_inferior:        ; vê - se se o objeto chegou o limite inferior
-	PUSH R8                      ; suposto ser a altura do objeto
-	PUSH R1                      ; suposto ser a linha do meteoro
-	MOV R5, MAX_LINHA
-	ADD R8, R1
-	CMP R8, R5
-	JZ apaga_objeto
-	POP R1
-	POP R8
-	RET
+	
 	
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
