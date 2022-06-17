@@ -279,7 +279,6 @@ LINHA_METEORO: WORD LINHA_INICIAL_METEORO ; variável que indica a linha do Mete
 ANTIGA_COLUNA_METEORO: WORD COLUNA_INICIAL_METEORO ; variável que indica a coluna do Meteoro
 	
 HOUVE_EXPLOSAO: WORD 0
-HOUVE_COLISAO: WORD 0
 	
 DISPLAY: WORD INICIO_DISPLAY  ; variável que indica o valor do display
 	
@@ -346,12 +345,6 @@ disparo_missil:
 aumenta_energia:
 	LOCK 0
 	
-disparo_nave_ma:
-	LOCK 0
-	
-disparo_missil:
-	LOCK 0
-	
 explodiu:
 	LOCK 0
 	
@@ -364,10 +357,8 @@ inicio:
 	
 	MOV BTE, tab                 ; inicializa BTE (registo de Base da Tabela de Exceções)
 	
-	;MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
-	;MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
-	MOV R1, 0                    ; cenário de fundo número 0
-	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
+	;MOV R1, 0 ; cenário de fundo número 0
+	;MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
 	MOV R7, 1                    ; valor a somar à coluna do boneco, para o movimentar
 	
 	EI0                          ; permite interrupções 0
@@ -405,9 +396,9 @@ inicio:
 obtem_tecla:
 	MOV R1, [tecla_carregada]    ; bloqueia neste LOCK até uma tecla ser carregada
 	
-	MOV R6, TECLA_1
+	MOV R6, TECLA_E
 	CMP R1, R6                   ; é a coluna da tecla 0?
-	JZ clique_disparo
+	JZ clique_E
 	
 	MOV R6, TECLA_C
 	CMP R1, R6                   ; é a coluna da tecla 0?
@@ -455,7 +446,7 @@ comeca_jogo:
 	MOV [modo_jogo], R2
 	JMP obtem_tecla
 	
-clique_disparo:
+clique_E:
 	MOV R2, 1
 	MOV [missil_disparado], R2   ; desbloqueia processo missil (qualquer registo serve)
 	JMP obtem_tecla
@@ -628,15 +619,6 @@ move_rover:
 	JMP ciclo_rover              ; esta "rotina" nunca retorna porque nunca termina
 	; Se se quisesse terminar o processo, era deixar o processo chegar a um RET
 	
-reinicia_rover:
-	MOV R1, LINHA_INICIAL_ROVER  ; linha do boneco
-	MOV R2, COLUNA_INICIAL_ROVER
-	MOV R4, DEF_ROVER            ; endereço da tabela que define o boneco
-	MOV [COLUNA_ROVER], R2       ; atualiza a coluna atual do rover
-	CALL desenha_objeto          ; desenha o boneco a partir da tabela
-	MOV R11, 0
-	MOV [RECOMECAR], R11
-	JMP espera_movimento_rover
 	
 reinicia_rover:
 	MOV R1, LINHA_INICIAL_ROVER  ; linha do boneco
@@ -661,9 +643,6 @@ reinicia_rover:
 	; com indicação do valor para inicializar o SP
 meteoro:                      ; processo que implementa o comportamento do boneco
 	; desenha o boneco na sua posição inicial
-	MOV R1, 0
-	MOV [HOUVE_COLISAO], R1
-
 	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
 	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
 	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
@@ -711,27 +690,17 @@ desce_meteoro:
 	CALL deteta_colisao_rover_meteoro
 	MOV R11, DEF_EXPLOSAO
 	CMP R10, R11
-	JZ meteoro_explodiu
-	MOV R11, [HOUVE_COLISAO]
-	CMP R11, 1
-	JZ meteoro_colidiu
+	JNZ nao_explodiu
+	;CALL apaga_objeto
+	CALL reinicia_meteoro
+	MOV [explodiu], R10
+	JMP fim_desce_meteoro
+nao_explodiu:
 	CALL apaga_objeto
 	MOV R6, [R5 + R3]
 	ADD R6, 2
 	MOV R8, [R6]
 	CALL testa_limite_inferior
-	JMP fim_desce_meteoro
-meteoro_colidiu:
-	CALL apaga_objeto
-	CALL reinicia_meteoro
-	MOV R11, 0
-	MOV [HOUVE_COLISAO], R11
-	JMP fim_desce_meteoro
-	;CALL apaga_objeto
-meteoro_explodiu:
-	CALL reinicia_meteoro
-	MOV [explodiu], R10
-	JMP fim_desce_meteoro
 fim_desce_meteoro:
 	POP R8
 	POP R6
@@ -761,13 +730,13 @@ define_tipo_meteoro:
 	JGE meteoro_mau
 meteoro_bom:
 	MOV R10, DEF_METEOROS_BONS
+	POP R2
 	JMP fim_tipo_meteoros
 meteoro_mau:
 	MOV R10, DEF_METEOROS_MAUS
-fim_tipo_meteoros:
 	POP R2
+fim_tipo_meteoros:
 	RET
-
 
 reinicia_meteoro:
     MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
@@ -797,7 +766,7 @@ ciclo_explosao:
 	CMP R5, 4
 	JNZ ciclo_explosao
 	MOV R2, 2
-	MOV [APAGA_PIXEIS], R2       ; apaga todos os pixels do ecra
+	MOV [APAGA_PIXEIS], R2         ; apaga todos os pixels do ecra
 	JMP explosao
 
 
@@ -812,10 +781,10 @@ ciclo_explosao:
 	PROCESS SP_inicial_missil    ; indicação de que a rotina que se segue é um processo, 
 	; com indicação do valor para inicializar o SP
 missil:                       ; processo que implementa o comportamento do boneco
-    MOV R3, 0
-	MOV [HOUVE_EXPLOSAO], R3
 	MOV R3, [missil_disparado]   ; lê o LOCK e bloqueia até o missil ser disparado
 	; desenha missil na sua posição inicial
+    MOV R3, 0
+	MOV [HOUVE_EXPLOSAO], R3
 
 	MOV R1, LINHA_INICIAL_ROVER  ; linha do missil
 	SUB R1, 1                    ; para começar em cima do rover
@@ -874,9 +843,6 @@ move_missil:
 	; DISPLAY
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	PROCESS SP_inicial_display_diminuir_tempo
-	
-display_inicia:
-	MOV R1, [modo_jogo]
 	
 display_inicia:
 	MOV R1, [modo_jogo]
@@ -1367,9 +1333,6 @@ fim_deteta_colisao:
 	
 	
 colisao_rover:                ; o que fazer quando o objeto colide
-	MOV R11, 1
-	MOV [HOUVE_COLISAO], R11
-	
 	MOV R1, [LINHA_METEORO]
 	MOV R2, [COLUNA_METEORO]
 	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
@@ -1379,7 +1342,7 @@ colisao_rover:                ; o que fazer quando o objeto colide
 	JZ colisao_meteoro_bom
 	JMP colisao_meteoro_mau
 colisao_meteoro_bom:
-	MOV [colisao_boa], R11
+	MOV [aumenta_energia], R11
 	
 colisao_meteoro_mau:          ;há de ser game over
 	

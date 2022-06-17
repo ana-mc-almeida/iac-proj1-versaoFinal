@@ -1,5 +1,12 @@
 fundos (começar, suspender/continuar e terminar o jogo)
 
+quando recomeça do C a partir do D precisa de voltar com o meteoro para cima
+quando recomeça do C a partir do D precisa de voltar com o missil para cima
+
+missil está a matar quando passa 1 casa do lado direito do meteoro
+
+as vezes aparem umas cenas cinzentas não sei bem porquê
+
 Perde quando:
     colisao meteoro missel / rover
     energia chega a 0
