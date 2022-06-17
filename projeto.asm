@@ -96,7 +96,7 @@
 	ECRA_MISSIL EQU 1
 	
 	ATRASO_ROVER EQU 70
-	MAX_ALCANCE_MISSIL EQU 0FH
+	MAX_ALCANCE_MISSIL EQU 09H
 	
 	NIVEIS_METEORO EQU 08H
 	DIVISAO_MAU_OU_BOM EQU 2
@@ -796,8 +796,6 @@ ciclo_explosao:
 	PROCESS SP_inicial_missil    ; indicação de que a rotina que se segue é um processo, 
 	; com indicação do valor para inicializar o SP
 missil:                       ; processo que implementa o comportamento do boneco
-	MOV R3, 0
-	MOV [HOUVE_EXPLOSAO], R3
 	MOV R3, [missil_disparado]   ; lê o LOCK e bloqueia até o missil ser disparado
 	; desenha missil na sua posição inicial
 	
@@ -1398,4 +1396,4 @@ colisao_disparo_meteoro_mau:
 	; diminuir energia
 	MOV R10, DEF_EXPLOSAO
 	JMP fim_deteta_colisao
-	
+
