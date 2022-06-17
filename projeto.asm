@@ -262,6 +262,7 @@ ANTIGA_COLUNA_METEORO: WORD COLUNA_INICIAL_METEORO ; variável que indica a colu
 LINHA_METEORO: WORD LINHA_INICIAL_METEORO ; variável que indica a linha do Meteoro
 	
 HOUVE_EXPLOSAO: WORD 0
+HOUVE_COLISAO: WORD 0
 	
 DISPLAY: WORD INICIO_DISPLAY  ; variável que indica o valor do display
 	
@@ -540,6 +541,9 @@ move_rover:
 	; com indicação do valor para inicializar o SP
 meteoro:                      ; processo que implementa o comportamento do boneco
 	; desenha o boneco na sua posição inicial
+	MOV R1, 0
+	MOV [HOUVE_COLISAO], R1
+	
 	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
 	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
 	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
@@ -561,7 +565,7 @@ ciclo_meteoro:
 	
 move_meteoro:                 ; neste ciclo o meteoro muda de posição
 	MOV R6, [evento_int_meteoros]
-
+	
 	ADD R7, 1
 	CALL desce_meteoro
 	MOV R8, 3
@@ -579,17 +583,27 @@ desce_meteoro:
 	CALL deteta_colisao_rover_meteoro
 	MOV R11, DEF_EXPLOSAO
 	CMP R10, R11
-	JNZ nao_explodiu
-	;CALL apaga_objeto
-	CALL reinicia_meteoro
-	MOV [explodiu], R10
-	JMP fim_desce_meteoro
-nao_explodiu:
+	JZ meteoro_explodiu
+	MOV R11, [HOUVE_COLISAO]
+	CMP R11, 1
+	JZ meteoro_colidiu
 	CALL apaga_objeto
 	MOV R6, [R5 + R3]
 	ADD R6, 2
 	MOV R8, [R6]
 	CALL testa_limite_inferior
+	JMP fim_desce_meteoro
+meteoro_colidiu:
+	CALL apaga_objeto
+	CALL reinicia_meteoro
+	MOV R11, 0
+	MOV [HOUVE_COLISAO], R11
+	JMP fim_desce_meteoro
+	;CALL apaga_objeto
+meteoro_explodiu:
+	CALL reinicia_meteoro
+	MOV [explodiu], R10
+	JMP fim_desce_meteoro
 fim_desce_meteoro:
 	POP R8
 	POP R6
@@ -655,7 +669,7 @@ ciclo_explosao:
 	CMP R5, 4
 	JNZ ciclo_explosao
 	MOV R2, 2
-	MOV [APAGA_PIXEIS], R2         ; apaga todos os pixels do ecra
+	MOV [APAGA_PIXEIS], R2       ; apaga todos os pixels do ecra
 	JMP explosao
 	
 	
@@ -1054,6 +1068,9 @@ fim_deteta_colisao:
 	
 	
 colisao_rover:                ; o que fazer quando o objeto colide
+	MOV R11, 1
+	MOV [HOUVE_COLISAO], R11
+	
 	MOV R1, [LINHA_METEORO]
 	MOV R2, [COLUNA_METEORO]
 	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
