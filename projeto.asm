@@ -83,7 +83,7 @@
 	ECRA_EXPLOSAO EQU 2
 	ECRA_MISSIL EQU 2
 	
-	ATRASO_ROVER EQU 7
+	ATRASO_ROVER EQU 70
 	MAX_ALCANCE_MISSIL EQU 7
 	
 	NIVEIS_METEORO EQU 08H
@@ -485,7 +485,8 @@ espera_movimento_rover:
 	MOV R3, [tecla_continuo]     ; lê o LOCK e bloqueia até o teclado escrever nele novamente
 	
 	ADD R5, 1                    ; incrementa o contador
-	CMP R5, ATRASO_ROVER
+	MOV R6, ATRASO_ROVER
+	CMP R5, R6
 	JNZ espera_movimento_rover   ; não se vai mover enquanto não acabar o atraso
 	
 	MOV R5, 0                    ; reiniciar o contador
