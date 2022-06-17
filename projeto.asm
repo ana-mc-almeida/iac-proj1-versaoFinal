@@ -138,6 +138,11 @@ SP_inicial_display_diminuir:
 	STACK 100H
 SP_inicial_display_aumentar:
 	
+	STACK 100H
+SP_inicial_display_aumentar_acertar_nave:
+	
+	STACK 100H
+SP_inicial_display_diminuir_missil:
 	
 	STACK 100H
 SP_inicial_explosao:
@@ -313,6 +318,12 @@ dimui_energia_a_jogar:
 aumenta_energia:
 	LOCK 0
 	
+disparo_nave_ma:
+	LOCK 0
+	
+disparo_missil:
+	LOCK 0
+	
 explodiu:
 	LOCK 0
 	
@@ -345,6 +356,8 @@ inicio:
 	
 	CALL display_aumentar
 	CALL display_diminuir
+	CALL disparo_nave_ma_display
+	CALL missil_display
 	
 	CALL rover                   ; cria o processo rover
 	CALL missil                  ; cria o processo missil
@@ -561,7 +574,6 @@ ciclo_meteoro:
 	
 move_meteoro:                 ; neste ciclo o meteoro muda de posição
 	MOV R6, [evento_int_meteoros]
-
 	ADD R7, 1
 	CALL desce_meteoro
 	MOV R8, 3
@@ -590,7 +602,7 @@ nao_explodiu:
 	ADD R6, 2
 	MOV R8, [R6]
 	CALL testa_limite_inferior
-fim_desce_meteoro:
+	fim_desce_meteoro:
 	POP R8
 	POP R6
 	RET
@@ -626,7 +638,7 @@ fim_tipo_meteoros:
 	POP R2
 	RET
 	
-	
+		
 reinicia_meteoro:
 	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
 	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
@@ -658,7 +670,7 @@ ciclo_explosao:
 	MOV [APAGA_PIXEIS], R2         ; apaga todos os pixels do ecra
 	JMP explosao
 	
-	
+
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; Processo
 	;
@@ -683,6 +695,7 @@ missil:                       ; processo que implementa o comportamento do bonec
 	ADD R2, 2                    ; para começar no meio do rover
 	MOV [COLUNA_MISSIL], R2      ; atualiza a variavel linha missil
 	
+	MOV [disparo_missil], R2
 	MOV R5, - 1                  ; inicializa o contador
 	MOV R3, 0
 	MOV [HOUVE_EXPLOSAO], R3
@@ -1155,3 +1168,96 @@ rot_int_energia:
 	MOV [dimui_energia_a_jogar], R1 ; desbloqueia processo display (qualquer registo serve)
 	POP R1
 	RFE
+	
+	
+	
+	
+	
+	
+	
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	; Processo Energia Aumenta ao disparar contra uma nave má
+	;
+	; DISPLAY
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	PROCESS SP_inicial_display_aumentar_acertar_nave
+	
+disparo_nave_ma_display:
+	MOV R1, [disparo_nave_ma]
+	MOV R11, [DISPLAY]           ; guarda o valor atual do display
+	MOV R1, MASCARA
+	MOV R2, R11
+	AND R2, R1
+	CALL testa_para_100
+	CMP R2, 0
+	JZ aumenta_5_registo
+	ADD R11, 5                   ; aumenta o registo do valor do display
+	ADD R11, 5                   ; aumenta o registo do valor do display
+	ADD R11, 1                   ; aumenta o registo do valor do display
+	JMP aumenta_5_display
+	
+aumenta_5_registo:
+	CALL testa_para_100
+	ADD R11, 5                   ; aumenta o registo do valor do display
+	JMP aumenta_5_display
+	
+testa_para_100:
+	MOV R6, [DISPLAY]            ; guarda o valor atual do display
+	SHR R6, 4
+	MOV R1, 09H
+	CMP R6, R1
+	JGE continua_testar
+	RET
+continua_testar:
+	MOV R1, 05H
+	CMP R2, 5
+	JGE fica_a_100
+	RET
+	
+fica_a_100:
+	MOV R11, 0100H
+	JMP aumenta_5_display
+	
+aumenta_5_display:
+	MOV [DISPLAYS], R11          ; altera o valor apresentado nos displays
+	MOV [DISPLAY], R11           ; grava na memória o novo valor do display
+	JMP disparo_nave_ma_display  ; espera até a tecla deixar de ser pressionada
+	
+	
+	
+	PROCESS SP_inicial_display_diminuir_missil
+	
+missil_display:
+	MOV R1, [disparo_missil]
+	MOV R11, [DISPLAY]           ; guarda o valor atual do display
+	MOV R1, MASCARA
+	MOV R2, R11
+	AND R2, R1
+	CMP R2, 0
+	CALL testa_para_0
+	JNZ diminui_5_registo
+	SUB R11, 5                   ; aumenta o registo do valor do display
+	SUB R11, 5                   ; aumenta o registo do valor do display
+	SUB R11, 1                   ; aumenta o registo do valor do display
+	JMP diminui_5_display
+	
+diminui_5_registo:
+	SUB R11, 5                   ; aumenta o registo do valor do display
+	JMP diminui_5_display
+	
+testa_para_0:
+	MOV R6, [DISPLAY]            ; guarda o valor atual do display
+	SHR R6, 4
+	MOV R1, 0
+	CMP R6, R1
+	JZ fica_a_0
+	RET
+	
+fica_a_0:
+	MOV R11, 0H
+	JMP diminui_5_display
+	
+diminui_5_display:
+	MOV [DISPLAYS], R11          ; altera o valor apresentado nos displays
+	MOV [DISPLAY], R11           ; grava na memória o novo valor do display
+	JMP missil_display           ; espera até a tecla deixar de ser pressionada
