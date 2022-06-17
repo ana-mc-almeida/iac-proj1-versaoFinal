@@ -28,6 +28,7 @@
 	SELECIONA_CENARIO_FUNDO EQU 6042H ; endereço do comando para selecionar uma imagem de fundo
 	SEL_ECRA EQU 6004H           ; para selecionar o ecrã onde vai ser desenhado o objeto
 	SELECIONA_SOM EQU 605AH      ; endereço do comando para selecionar um som de fundo
+	APAGA_PIXEIS EQU 6000H       ; Apaga todos os pixels do ecrã especificado
 	
 	
 	DISPLAYS EQU 0A000H          ; endereço do periférico que liga aos displays
@@ -80,11 +81,10 @@
 	
 	ECRA_ROVER EQU 0             ; ecrã especificado para o Rover
 	ECRA_METEORO EQU 1           ; ecrã especificado para o Meteoro
-	ECRA_EXPLOSAO EQU 1
+	ECRA_EXPLOSAO EQU 2
 	ECRA_MISSIL EQU 1
 	
 	ATRASO_ROVER EQU 70
-	ATRASO_EXPLOSAO EQU 0F00H
 	MAX_ALCANCE_MISSIL EQU 0FH
 	
 	NIVEIS_METEORO EQU 08H
@@ -544,7 +544,7 @@ meteoro:                      ; processo que implementa o comportamento do bonec
 	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
 	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
 	MOV [COLUNA_METEORO], R2     ; guarda o valor da coluna do meteoro
-	MOV [ANTIGA_COLUNA_METEORO], R2     ; guarda o valor da coluna do meteoro
+	MOV [ANTIGA_COLUNA_METEORO], R2 ; guarda o valor da coluna do meteoro
 	MOV R3, - 2                  ;count para ler o tamanho do meteoro
 	MOV R7, 0                    ; count para ver se é linha multipla de 3
 	call define_tipo_meteoro
@@ -561,6 +561,7 @@ ciclo_meteoro:
 	
 move_meteoro:                 ; neste ciclo o meteoro muda de posição
 	MOV R6, [evento_int_meteoros]
+
 	ADD R7, 1
 	CALL desce_meteoro
 	MOV R8, 3
@@ -643,22 +644,18 @@ reinicia_meteoro:
 	; temporização marcada pela interrupção 0
 	;
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	PROCESS SP_inicial_explosao    ; indicação de que a rotina que se segue é um processo, 
+	PROCESS SP_inicial_explosao  ; indicação de que a rotina que se segue é um processo, 
 	; com indicação do valor para inicializar o SP
 explosao:                     ; processo que implementa o comportamento do boneco
 	MOV R3, [explodiu]
-	MOV R1, [LINHA_METEORO]
-	MOV R2, [ANTIGA_COLUNA_METEORO]
-	MOV R4, DEF_EXPLOSAO
-	MOV R5, ATRASO_EXPLOSAO
+	MOV R5, 0
 ciclo_explosao:
-YIELD
-	SUB R5, 1
-	CMP R5, 0
+	MOV R3, [missil_movimenta]
+	ADD R5, 1
+	CMP R5, 4
 	JNZ ciclo_explosao
-	CALL apaga_objeto
-	MOV R2, [COLUNA_METEORO]
-	MOV [ANTIGA_COLUNA_METEORO], R2
+	MOV R2, 2
+	MOV [APAGA_PIXEIS], R2         ; apaga todos os pixels do ecra
 	JMP explosao
 	
 	
