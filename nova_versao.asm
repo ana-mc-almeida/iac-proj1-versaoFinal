@@ -41,6 +41,8 @@
 	N_BONECOS EQU 4              ; número de bonecos (até 4)
 
     MODO EQU 0
+
+    ATIVO EQU 0
 	
 	LINHA_BONECO_0 EQU 4         ; linha do boneco 0
 	LINHA_BONECO_1 EQU 12        ; linha do boneco 1
@@ -262,6 +264,8 @@ DISPLAY: WORD INICIO_DISPLAY  ; variável que indica o valor do display
 
 JOGO: WORD MODO
 	
+RECOMECAR: WORD ATIVO
+
 linha_boneco:                 ; linha em que cada boneco está (inicializada com a linha inicial)
 	WORD LINHA_BONECO_0
 	WORD LINHA_BONECO_1
@@ -342,18 +346,14 @@ inicio:
 	CALL rover                   ; cria o processo rover
 	CALL missil                  ; cria o processo missil
 	CALL meteoro
-	
-recomeca_jogo:
-	MOV R0, DISPLAYS             ; endereço do periférico que liga aos displays
-	MOV R2, INICIO_DISPLAY
-    MOV [R0], R2
 
     MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
 	MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 
-    MOV R0, MODO
-    MOV [JOGO], R0
-	
+    MOV R0, DISPLAYS             ; endereço do periférico que liga aos displays
+	MOV R2, INICIO_DISPLAY
+    MOV [R0], R2
+
 obtem_tecla:
 	MOV R1, [tecla_carregada]    ; bloqueia neste LOCK até uma tecla ser carregada
 	
@@ -389,7 +389,10 @@ testa_C:
     MOV R2, 2
     MOV R0, [JOGO]
     CMP R2, R0
-    JZ recomeca_jogo
+    JNZ comeca_jogo
+    CALL recomeca_jogo
+    JMP obtem_tecla
+comeca_jogo:
     MOV R2, 1
     MOV [JOGO], R2
     MOV [modo_jogo], R2
@@ -510,14 +513,15 @@ ciclo_rover:
 espera_movimento_rover:
 	MOV R3, [tecla_continuo]     ; lê o LOCK e bloqueia até o teclado escrever nele novamente
 	
-    MOV R10, 3
-    MOV R11, [JOGO]
-    CMP R10, R11
-    JZ move_rover_posicao_inicial
     MOV R10, 2
     MOV R11, [JOGO]
     CMP R10, R11
     JZ espera_movimento_rover
+
+    MOV R11, [RECOMECAR]
+    MOV R10, 1
+    CMP R11, R10
+    JZ reinicia_rover
 
 	ADD R5, 1                    ; incrementa o contador
 	CMP R5, ATRASO_ROVER
@@ -551,15 +555,15 @@ move_rover:
 	; Se se quisesse terminar o processo, era deixar o processo chegar a um RET
 	
 
-move_rover_posicao_inicial:
-    CALL apaga_objeto            ; apaga o boneco na sua posição corrente
-    MOV R5, 0                    ; inicializa o contador
-    MOV R1, 1
-    MOV R2, COLUNA_INICIAL_ROVER
-    MOV R1, LINHA_INICIAL_ROVER
-    MOV R10, 1
-    MOV [JOGO], R10
-    JMP ciclo_rover
+reinicia_rover:
+    MOV R1, LINHA_INICIAL_ROVER  ; linha do boneco
+	MOV R2, COLUNA_INICIAL_ROVER
+	MOV R4, DEF_ROVER            ; endereço da tabela que define o boneco
+	MOV [COLUNA_ROVER], R2       ; atualiza a coluna atual do rover
+	CALL desenha_objeto          ; desenha o boneco a partir da tabela
+    MOV R11, 0
+    MOV [RECOMECAR], R11
+    JMP espera_movimento_rover
 	
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -580,11 +584,12 @@ meteoro:                      ; processo que implementa o comportamento do bonec
 	MOV R3, - 2                  ;count para ler o tamanho do meteoro
 	MOV R7, 0                    ; count para ver se é linha multipla de 3
 	call define_tipo_meteoro
+    MOV R6, [modo_jogo]
 	
 aumenta_meteoro:
 	ADD R3, 2
 ciclo_meteoro:
-	
+
 	YIELD
 	
 	MOV R5, R10                  ; endereço da tabela que define o boneco
@@ -593,6 +598,12 @@ ciclo_meteoro:
 	
 move_meteoro:                 ; neste ciclo o meteoro muda de posição
 	MOV R6, [evento_int_meteoros]
+
+    MOV R6, 2
+    MOV R11, [JOGO]
+    CMP R6, R11
+    JZ move_meteoro
+
 	ADD R7, 1
 	CALL desce_meteoro
 	MOV R8, 3
@@ -627,7 +638,7 @@ reinicia_meteoro:
 	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
 	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
 	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
-	MOV R3, - 2                  ;count para ler o tamanho do meteoro
+	MOV R3, - 2                  ; count para ler o tamanho do meteoro
 	MOV R7, 0                    ; count para ver se é linha multipla de 3
 	call define_tipo_meteoro
 	JMP fim_testa_limites_inferior
@@ -645,14 +656,14 @@ define_tipo_meteoro:
 	JGE meteoro_mau
 meteoro_bom:
 	MOV R10, DEF_METEOROS_BONS
+    POP R2
 	JMP fim_tipo_meteoros
 meteoro_mau:
 	MOV R10, DEF_METEOROS_MAUS
+    POP R2
 fim_tipo_meteoros:
-	POP R2
 	RET
-	
-	
+
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; Processo
 	;
@@ -683,7 +694,13 @@ ciclo_missil:
 	JZ missil                    ; se já estiver no calnca máximo, o missil só desaparece
 	CALL desenha_objeto          ; desenha o boneco a partir da tabela
 espera_movimento_missil:
-	MOV R3, [missil_movimenta]   ; lê o LOCK e bloqueia até o missil ser movimentado
+    MOV R3, [missil_movimenta]   ; lê o LOCK e bloqueia até o missil ser movimentado
+
+    MOV R10, 2
+    MOV R11, [JOGO]
+    CMP R10, R11
+    JZ espera_movimento_missil
+
 	ADD R5, 1                    ; incrementa o contador
 	JMP move_cima
 	
@@ -714,16 +731,13 @@ display_inicia:
     MOV R1, [modo_jogo]
 
 display_diminuir:
-
     MOV R1, [dimui_energia_a_jogar]
     MOV R1, 2
     MOV R11, [JOGO]
     CMP R1, R11
     JZ display_diminuir
 	JMP diminui_em_decimal
-	MOV R1, 0
-	MOV [dimui_energia_a_jogar], R1
-	JMP display_diminuir
+
 diminui_em_decimal:
 	MOV R11, [DISPLAY]           ; guarda o valor atual do display
 	MOV R1, MASCARA
@@ -1037,3 +1051,24 @@ rot_int_energia:
 	MOV [dimui_energia_a_jogar], R1 ; desbloqueia processo display (qualquer registo serve)
 	POP R1
 	RFE
+
+
+
+
+recomeca_jogo:
+	MOV R2, INICIO_DISPLAY
+    MOV [DISPLAYS], R2
+    MOV [DISPLAY], R2
+
+    MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+	MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
+
+    MOV R0, MODO
+    MOV [JOGO], R0
+
+    MOV R10, 1
+    MOV [JOGO], R10
+
+    MOV R11, 1                    ; inicializa o contador
+    MOV [RECOMECAR], R11
+    RET
