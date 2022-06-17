@@ -346,15 +346,10 @@ disparo_missil:
 aumenta_energia:
 	LOCK 0
 	
-disparo_nave_ma:
-	LOCK 0
-	
-disparo_missil:
-	LOCK 0
-	
 explodiu:
 	LOCK 0
 	
+
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; * Código
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -364,10 +359,8 @@ inicio:
 	
 	MOV BTE, tab                 ; inicializa BTE (registo de Base da Tabela de Exceções)
 	
-	;MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
-	;MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
-	MOV R1, 0                    ; cenário de fundo número 0
-	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
+	;MOV R1, 0 ; cenário de fundo número 0
+	;MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
 	MOV R7, 1                    ; valor a somar à coluna do boneco, para o movimentar
 	
 	EI0                          ; permite interrupções 0
@@ -628,15 +621,6 @@ move_rover:
 	JMP ciclo_rover              ; esta "rotina" nunca retorna porque nunca termina
 	; Se se quisesse terminar o processo, era deixar o processo chegar a um RET
 	
-reinicia_rover:
-	MOV R1, LINHA_INICIAL_ROVER  ; linha do boneco
-	MOV R2, COLUNA_INICIAL_ROVER
-	MOV R4, DEF_ROVER            ; endereço da tabela que define o boneco
-	MOV [COLUNA_ROVER], R2       ; atualiza a coluna atual do rover
-	CALL desenha_objeto          ; desenha o boneco a partir da tabela
-	MOV R11, 0
-	MOV [RECOMECAR], R11
-	JMP espera_movimento_rover
 	
 reinicia_rover:
 	MOV R1, LINHA_INICIAL_ROVER  ; linha do boneco
@@ -797,7 +781,7 @@ ciclo_explosao:
 	CMP R5, 4
 	JNZ ciclo_explosao
 	MOV R2, 2
-	MOV [APAGA_PIXEIS], R2       ; apaga todos os pixels do ecra
+	MOV [APAGA_PIXEIS], R2         ; apaga todos os pixels do ecra
 	JMP explosao
 
 
@@ -874,9 +858,6 @@ move_missil:
 	; DISPLAY
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	PROCESS SP_inicial_display_diminuir_tempo
-	
-display_inicia:
-	MOV R1, [modo_jogo]
 	
 display_inicia:
 	MOV R1, [modo_jogo]
