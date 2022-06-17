@@ -303,7 +303,7 @@ missil_movimenta:
 dimui_energia_a_jogar:
 	LOCK 0
 	
-aumenta_energia_clicar:
+aumenta_energia:
 	LOCK 0
 	
 	
@@ -364,7 +364,7 @@ obtem_tecla:
 	
 	
 testa_D:
-	MOV [aumenta_energia_clicar], R1
+	MOV [aumenta_energia], R1
 	JMP obtem_tecla              ; processo do programa principal nunca termina
 	
 testa_C:
@@ -563,6 +563,7 @@ move_meteoro:                 ; neste ciclo o meteoro muda de posição
 desce_meteoro:
 	PUSH R6
 	PUSH R8
+	CALL deteta_colisao_rover_meteoro
 	CALL apaga_objeto
 	MOV R6, [R5 + R3]
 	ADD R6, 2
@@ -718,11 +719,11 @@ vai_diminuir:
 	PROCESS SP_inicial_display_aumentar
 	
 display_aumentar:
-	MOV R1, [aumenta_energia_clicar]
+	MOV R1, [aumenta_energia]
 	CMP R1, 0
 	JNZ aumenta_em_decimal
 	MOV R1, 0
-	MOV [aumenta_energia_clicar], R1
+	MOV [aumenta_energia], R1
 	RET
 	
 aumenta_em_decimal:
@@ -927,6 +928,103 @@ sai_testa_limites:            ; neste ciclo, para - se de testar se o rover cheg
 	POP R6
 	POP R5
 	RET
+	
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	; deteta_colisão - > Deteta se existe colisão entre o rover e um meteoro (bom )
+	; Argumentos:
+	;
+	;
+	;
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	
+deteta_colisao_rover_meteoro:
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	PUSH R4
+	PUSH R5
+	PUSH R6
+	PUSH R7
+	PUSH R11
+nao_colisao_cima:
+	MOV R1, [LINHA_METEORO]        ; numero da linha inicial do meteoro
+	MOV R2, ALTURA_METEORO_5     ; altura do meteoro
+	ADD R2, R1                   ; linha inferior do meteoro
+	MOV R3, [LINHA_ROVER]          ; linha inicial do rover
+	MOV R4, ALTURA_ROVER         ; altura do Rover
+	;SUB R3, R4                   ; linha superior do Rover
+	CMP R2, R3                   ; se a linha inferior do meteoro for superior à linha mais acima do Rover, não colidem nesta situacao
+	MOV R1, [COLUNA_METEORO]       ; numero da coluna inicial do meteoro
+	JLT deteta_colisao_disparo
+nao_colisao_lados:
+	MOV R2, LARGURA_METEORO_5    ; largura do meteoro
+	ADD R2, R1                   ; coluna onde o meteoro termina
+	MOV R3, [COLUNA_ROVER]         ; coluna onde o rover se encontra
+	MOV R4, LARGURA_ROVER        ; largura do Rover
+	ADD R4, R3                   ; coluna onde o rover termina
+nao_colisao_direita:
+	CMP R1, R4
+	JGT deteta_colisao_disparo
+nao_colisao_esquerda:
+	CMP R3, R2
+	JGT deteta_colisao_disparo
+	JMP colisao_rover
+deteta_colisao_disparo:
+	MOV R7, [COLUNA_MISSIL]        ; coluna onde o missil está a ser disparado
+	CMP R1, R7                   ; se a coluna mais a esquerda do meteoro estiver depois da do missil, n há colisão
+	JGT fim_deteta_colisao       ; não há colisão
+	CMP R2, R7                   ; se a coluna mais a direita onde o meteoro estiver antes da do missil, nao há colisão
+	JLT fim_deteta_colisao
+	CALL colisao_disparo
+fim_deteta_colisao:
+	POP R11
+	POP R7
+	POP R6
+	POP R5
+	POP R4
+	POP R3
+	POP R2
+	POP R1
+	RET
+	
+	
+colisao_rover:                ; o que fazer quando o objeto colide
+	MOV R1, [LINHA_METEORO]
+	MOV R2, [COLUNA_METEORO]
+	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
+	CALL apaga_objeto
+	MOV R11, DEF_METEOROS_BONS
+	CMP R10, R11
+	JZ colisao_meteoro_bom
+	JMP colisao_meteoro_mau
+colisao_meteoro_bom:
+	MOV [aumenta_energia], R11
+	
+colisao_meteoro_mau:          ;há de ser game over
+	
+fim_colisao_rover:
+	JMP fim_deteta_colisao
+	
+colisao_disparo:
+	MOV R1, [LINHA_METEORO]
+	MOV R2, [COLUNA_METEORO]
+	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
+	CALL apaga_objeto
+	MOV R1, [LINHA_MISSIL]
+	MOV R2, [COLUNA_MISSIL]
+	MOV R4, DEF_MISSIL
+	CALL apaga_objeto
+	MOV R1, [LINHA_METEORO]
+	MOV R2, [COLUNA_METEORO]
+	MOV R4, DEF_EXPLOSAO
+	CALL desenha_objeto
+	MOV R11, DEF_METEOROS_MAUS
+	CMP R10, R11
+	JZ colisao_disparo_meteoro_mau
+	JMP fim_deteta_colisao
+colisao_disparo_meteoro_mau:
+	; diminuir energia
+	JMP fim_deteta_colisao
 	
 	
 	
