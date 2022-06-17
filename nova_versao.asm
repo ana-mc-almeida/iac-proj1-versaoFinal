@@ -417,7 +417,6 @@ sai_de_pausa:
     JMP obtem_tecla
 
 testa_C:
-    MOV [disparo_missil], R1
     MOV R2, 2
     MOV R0, [JOGO]
     CMP R2, R0
@@ -720,6 +719,8 @@ missil:                       ; processo que implementa o comportamento do bonec
 	ADD R2, 2                    ; para começar no meio do rover
 	MOV [COLUNA_MISSIL], R2      ; atualiza a variavel linha missil
 	
+    MOV [disparo_missil], R2
+
 	MOV R5, - 1                  ; inicializa o contador
 	
 ciclo_missil:
@@ -903,12 +904,21 @@ aumenta_5_display:
 missil_display:
     MOV R1, [disparo_missil]
     MOV R11, [DISPLAY]           ; guarda o valor atual do display
+    MOV R6, R11
+    SHR R6, 4
+    MOV R1, 0
+    CMP R6, R1
+    JZ fica_a_0
+
+    MOV R1, 010H
+    CMP R6, R1
+    JZ esta_a_100
+
 	MOV R1, MASCARA
 	MOV R2, R11
 	AND R2, R1
 	CMP R2, 0
-    CALL testa_para_0
-	JNZ diminui_5_registo
+    JNZ diminui_5_registo
 	SUB R11, 5                  ; aumenta o registo do valor do display
 	SUB R11, 5                  ; aumenta o registo do valor do display
 	SUB R11, 1                  ; aumenta o registo do valor do display
@@ -919,17 +929,13 @@ diminui_5_registo:
 	SUB R11, 5                  ; aumenta o registo do valor do display
 	JMP diminui_5_display
 
-testa_para_0:
-    MOV R6, [DISPLAY]           ; guarda o valor atual do display
-    SHR R6, 4
-    MOV R1, 0
-    CMP R6, R1
-    JZ fica_a_0
-    RET
-
 fica_a_0:
 	MOV R11, 0H
 	JMP diminui_5_display
+
+esta_a_100:
+    MOV R11, 095H
+    JMP diminui_5_display
 	
 diminui_5_display:
 	MOV [DISPLAYS], R11          ; altera o valor apresentado nos displays
