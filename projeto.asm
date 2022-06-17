@@ -1061,7 +1061,7 @@ desenha_objeto:               ; neste ciclo é desenhado um objeto na linha e co
 obtem_altura_desenha:         ; neste ciclo é obtida a altura do objeto
 	MOV R9, [R4]                 ; obtém a largura do objeto
 	ADD R4, 2                    ; endereço da altura do objeto
-	MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado
+	;MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado
 	MOV [SEL_ECRA], R9           ; seleção do ecrã onde o objeto vai ser desenhado
 	MOV R8, [R4]                 ; obtém a largura do objeto
 	ADD R4, 2                    ; endereço da altura do objeto

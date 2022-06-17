@@ -14,6 +14,11 @@ Perde quando:
 
 verificar se a energia chega a 0
 
+SE HOUVER TEMPO:
+    as vezes aparem umas cenas cinzentas não sei bem porquê
+    adicionar sons
+    alterar imagens de fundo
+
 JÁ FEITO:
 
 displays de hexadecimal para decimal
