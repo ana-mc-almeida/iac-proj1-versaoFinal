@@ -285,7 +285,9 @@ DISPLAY: WORD INICIO_DISPLAY  ; variável que indica o valor do display
 	
 JOGO: WORD MODO
 	
-RECOMECAR: WORD ATIVO
+RECOMECAR_ROVER: WORD ATIVO
+RECOMECAR_MISSIL: WORD ATIVO
+RECOMECAR_METEORO: WORD ATIVO
 	
 linha_boneco:                 ; linha em que cada boneco está (inicializada com a linha inicial)
 	WORD LINHA_BONECO_0
@@ -459,14 +461,16 @@ recomeca_jogo:
 	MOV [DISPLAYS], R2
 	MOV [DISPLAY], R2
 	
-	MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+	;MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
 	MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 	
 	MOV R10, 1
 	MOV [JOGO], R10
 	
 	MOV R11, 1                   ; inicializa o contador
-	MOV [RECOMECAR], R11
+	MOV [RECOMECAR_ROVER], R11
+	MOV [RECOMECAR_MISSIL], R11
+	MOV [RECOMECAR_METEORO], R11
 	
 	REt
 	
@@ -584,7 +588,7 @@ espera_movimento_rover:
 	CMP R10, R11
 	JZ espera_movimento_rover
 	
-	MOV R11, [RECOMECAR]
+	MOV R11, [RECOMECAR_ROVER]
 	MOV R10, 1
 	CMP R11, R10
 	JZ reinicia_rover
@@ -629,7 +633,7 @@ reinicia_rover:
 	MOV [COLUNA_ROVER], R2       ; atualiza a coluna atual do rover
 	CALL desenha_objeto          ; desenha o boneco a partir da tabela
 	MOV R11, 0
-	MOV [RECOMECAR], R11
+	MOV [RECOMECAR_ROVER], R11
 	JMP espera_movimento_rover
 	
 	
@@ -647,7 +651,8 @@ meteoro:                      ; processo que implementa o comportamento do bonec
 	; desenha o boneco na sua posição inicial
 	MOV R1, 0
 	MOV [HOUVE_COLISAO], R1
-	
+	MOV R6, [modo_jogo]
+inicializa_meteoro:
 	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
 	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
 	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
@@ -658,13 +663,20 @@ meteoro:                      ; processo que implementa o comportamento do bonec
 	MOV R3, - 2                  ;count para ler o tamanho do meteoro
 	MOV R7, 0                    ; count para ver se é linha multipla de 3
 	call define_tipo_meteoro
-	MOV R6, [modo_jogo]
+
+	MOV R11, 0
+	MOV [RECOMECAR_METEORO], R11
 	
 aumenta_meteoro:
 	ADD R3, 2
 ciclo_meteoro:
 	
 	YIELD
+
+	MOV R11, [RECOMECAR_METEORO]
+	MOV R6, 1
+	CMP R11, R6
+	JZ inicializa_meteoro
 	
 	MOV R5, R10                  ; endereço da tabela que define o boneco
 	MOV R4, [R5 + R3]            ; lê a tabela de meteoros
@@ -798,7 +810,6 @@ ciclo_explosao:
 missil:                       ; processo que implementa o comportamento do boneco
 	MOV R3, [missil_disparado]   ; lê o LOCK e bloqueia até o missil ser disparado
 	; desenha missil na sua posição inicial
-	
 	MOV R1, LINHA_INICIAL_ROVER  ; linha do missil
 	SUB R1, 1                    ; para começar em cima do rover
 	MOV [LINHA_MISSIL], R1       ; atualiza a variavel linha missil
@@ -813,8 +824,16 @@ missil:                       ; processo que implementa o comportamento do bonec
 	
 	MOV R3, 0
 	MOV [HOUVE_EXPLOSAO], R3
+
+	MOV R11, 0
+	MOV [RECOMECAR_MISSIL], R11
 	
 ciclo_missil:
+	MOV R11, [RECOMECAR_MISSIL]
+	MOV R10, 1
+	CMP R11, R10
+	JZ missil
+	
 	MOV R3, [HOUVE_EXPLOSAO]
 	CMP R3, 1
 	JZ missil                    ; testa se houve explusao
@@ -1396,4 +1415,3 @@ colisao_disparo_meteoro_mau:
 	; diminuir energia
 	MOV R10, DEF_EXPLOSAO
 	JMP fim_deteta_colisao
-
