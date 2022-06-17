@@ -28,6 +28,7 @@
 	SELECIONA_CENARIO_FUNDO EQU 6042H ; endereço do comando para selecionar uma imagem de fundo
 	SEL_ECRA EQU 6004H           ; para selecionar o ecrã onde vai ser desenhado o objeto
 	SELECIONA_SOM EQU 605AH      ; endereço do comando para selecionar um som de fundo
+	APAGA_PIXEIS EQU 6000H       ; Apaga todos os pixels do ecrã especificado
 	
 	
 	DISPLAYS EQU 0A000H          ; endereço do periférico que liga aos displays
@@ -39,6 +40,17 @@
 	INICIO_DISPLAY EQU 0100H     ; valor inicial do display
 	
 	N_BONECOS EQU 4              ; número de bonecos (até 4)
+	
+	MODO EQU 0
+	
+	ATIVO EQU 0
+	
+	FUNDO_INICIO EQU 0
+	FUNDO_A_JOGAR EQU 1
+	FUNDO_PAUSA EQU 2
+	FUNDO_GAME_OVER_ENERGIA EQU 3
+	FUNDO_GAME_OVER_COLISAO EQU 4
+	FUNDO_JOGO_TERMINADO EQU 5
 	
 	LINHA_BONECO_0 EQU 4         ; linha do boneco 0
 	LINHA_BONECO_1 EQU 12        ; linha do boneco 1
@@ -81,10 +93,10 @@
 	ECRA_ROVER EQU 0             ; ecrã especificado para o Rover
 	ECRA_METEORO EQU 1           ; ecrã especificado para o Meteoro
 	ECRA_EXPLOSAO EQU 2
-	ECRA_MISSIL EQU 2
+	ECRA_MISSIL EQU 1
 	
-	ATRASO_ROVER EQU 7
-	MAX_ALCANCE_MISSIL EQU 7
+	ATRASO_ROVER EQU 70
+	MAX_ALCANCE_MISSIL EQU 0FH
 	
 	NIVEIS_METEORO EQU 08H
 	DIVISAO_MAU_OU_BOM EQU 2
@@ -132,18 +144,21 @@ SP_inicial_missil:            ; este é o endereço com que o SP deste processo 
 SP_inicial_meteoro:           ; este é o endereço com que o SP deste processo deve ser inicializado
 	
 	STACK 100H
-SP_inicial_display_diminuir:
+SP_inicial_display_diminuir_tempo:
 	
 	STACK 100H
-SP_inicial_display_aumentar:
+SP_inicial_display_aumentar_colisao_boa:
 	
 	STACK 100H
 SP_inicial_display_aumentar_acertar_nave:
-
+	
 	STACK 100H
-SP_inicial_display_diminuir_missil:	
-
-
+SP_inicial_display_diminuir_missil:
+	
+	STACK 100H
+SP_inicial_explosao:
+	
+	
 DEF_ROVER:                    ; tabela que define o Rover (cor, largura, pixels)
 	WORD ECRA_ROVER              ; ecrã do Rover
 	WORD LARGURA_ROVER           ; largura do Rover
@@ -261,9 +276,15 @@ LINHA_MISSIL: WORD LINHA_INICIAL_ROVER ; variável que indica a linha do Rover
 COLUNA_METEORO: WORD COLUNA_INICIAL_METEORO ; variável que indica a coluna do Meteoro
 LINHA_METEORO: WORD LINHA_INICIAL_METEORO ; variável que indica a linha do Meteoro
 	
+ANTIGA_COLUNA_METEORO: WORD COLUNA_INICIAL_METEORO ; variável que indica a coluna do Meteoro
+	
+HOUVE_EXPLOSAO: WORD 0
 	
 DISPLAY: WORD INICIO_DISPLAY  ; variável que indica o valor do display
 	
+JOGO: WORD MODO
+	
+RECOMECAR: WORD ATIVO
 	
 linha_boneco:                 ; linha em que cada boneco está (inicializada com a linha inicial)
 	WORD LINHA_BONECO_0
@@ -309,13 +330,22 @@ missil_movimenta:
 dimui_energia_a_jogar:
 	LOCK 0
 	
-aumenta_energia_clicar:
+colisao_boa:
 	LOCK 0
 	
-disparo_nave_ma:
+modo_jogo:
 	LOCK 0
-
+	
+acerta_nave_ma:
+	LOCK 0
+	
 disparo_missil:
+	LOCK 0
+	
+aumenta_energia:
+	LOCK 0
+	
+explodiu:
 	LOCK 0
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -327,8 +357,6 @@ inicio:
 	
 	MOV BTE, tab                 ; inicializa BTE (registo de Base da Tabela de Exceções)
 	
-	MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
-	MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 	;MOV R1, 0 ; cenário de fundo número 0
 	;MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
 	MOV R7, 1                    ; valor a somar à coluna do boneco, para o movimentar
@@ -344,19 +372,26 @@ inicio:
 	
 	CALL teclado                 ; cria o processo teclado
 	
-	CALL display_aumentar
-	CALL display_diminuir
+	CALL colisao_boa_display
+	CALL display_inicia
 	CALL disparo_nave_ma_display
 	CALL missil_display
+	
+	CALL explosao
 	
 	CALL rover                   ; cria o processo rover
 	CALL missil                  ; cria o processo missil
 	CALL meteoro
 	
+	MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+	MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 	
 	MOV R0, DISPLAYS             ; endereço do periférico que liga aos displays
-	MOV R2, [DISPLAY]
+	MOV R2, INICIO_DISPLAY
 	MOV [R0], R2
+	
+	MOV R1, FUNDO_INICIO         ; cenário de fundo número 0
+	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
 	
 obtem_tecla:
 	MOV R1, [tecla_carregada]    ; bloqueia neste LOCK até uma tecla ser carregada
@@ -375,14 +410,41 @@ obtem_tecla:
 	
 	JMP obtem_tecla
 	
-	
 testa_D:
-	MOV [aumenta_energia_clicar], R1
+	MOV R2, 2
+	MOV R0, [JOGO]
+	CMP R2, R0
+	JZ sai_de_pausa
+	MOV R2, 1
+	MOV R0, [JOGO]
+	CMP R2, R0
+	JNZ obtem_tecla
+	MOV R1, FUNDO_PAUSA          ; cenário de fundo número 0
+	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
+	MOV R2, 2
+	MOV [JOGO], R2
 	JMP obtem_tecla              ; processo do programa principal nunca termina
+sai_de_pausa:
+	MOV R1, FUNDO_A_JOGAR        ; cenário de fundo número 0
+	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
+	MOV R2, 1
+	MOV [JOGO], R2
+	JMP obtem_tecla
 	
 testa_C:
-	MOV [disparo_missil], R1
-	JMP obtem_tecla              ; processo do programa principal nunca termina
+	MOV R2, 2
+	MOV R0, [JOGO]
+	CMP R2, R0
+	CALL recomeca_jogo
+	MOV R1, FUNDO_A_JOGAR        ; cenário de fundo número 0
+	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
+	JNZ comeca_jogo
+	JMP obtem_tecla
+comeca_jogo:
+	MOV R2, 1
+	MOV [JOGO], R2
+	MOV [modo_jogo], R2
+	JMP obtem_tecla
 	
 clique_E:
 	MOV R2, 1
@@ -490,6 +552,7 @@ rover:                        ; processo que implementa o comportamento do bonec
 	MOV R1, LINHA_INICIAL_ROVER  ; linha do boneco
 	MOV R2, COLUNA_INICIAL_ROVER
 	MOV R5, 0                    ; inicializa o contador
+	MOV R6, [modo_jogo]
 	
 ciclo_rover:
 	MOV R4, DEF_ROVER            ; endereço da tabela que define o boneco
@@ -498,8 +561,19 @@ ciclo_rover:
 espera_movimento_rover:
 	MOV R3, [tecla_continuo]     ; lê o LOCK e bloqueia até o teclado escrever nele novamente
 	
+	MOV R10, 2
+	MOV R11, [JOGO]
+	CMP R10, R11
+	JZ espera_movimento_rover
+	
+	MOV R11, [RECOMECAR]
+	MOV R10, 1
+	CMP R11, R10
+	JZ reinicia_rover
+	
 	ADD R5, 1                    ; incrementa o contador
-	CMP R5, ATRASO_ROVER
+    MOV R6, ATRASO_ROVER
+	CMP R5, R6
 	JNZ espera_movimento_rover   ; não se vai mover enquanto não acabar o atraso
 	
 	MOV R5, 0                    ; reiniciar o contador
@@ -530,6 +604,16 @@ move_rover:
 	; Se se quisesse terminar o processo, era deixar o processo chegar a um RET
 	
 	
+reinicia_rover:
+	MOV R1, LINHA_INICIAL_ROVER  ; linha do boneco
+	MOV R2, COLUNA_INICIAL_ROVER
+	MOV R4, DEF_ROVER            ; endereço da tabela que define o boneco
+	MOV [COLUNA_ROVER], R2       ; atualiza a coluna atual do rover
+	CALL desenha_objeto          ; desenha o boneco a partir da tabela
+	MOV R11, 0
+	MOV [RECOMECAR], R11
+	JMP espera_movimento_rover
+	
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; Processo
@@ -546,9 +630,14 @@ meteoro:                      ; processo que implementa o comportamento do bonec
 	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
 	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
 	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
+	
+	MOV [COLUNA_METEORO], R2     ; guarda o valor da coluna do meteoro
+	MOV [ANTIGA_COLUNA_METEORO], R2 ; guarda o valor da coluna do meteoro
+	
 	MOV R3, - 2                  ;count para ler o tamanho do meteoro
 	MOV R7, 0                    ; count para ver se é linha multipla de 3
 	call define_tipo_meteoro
+	MOV R6, [modo_jogo]
 	
 aumenta_meteoro:
 	ADD R3, 2
@@ -562,6 +651,12 @@ ciclo_meteoro:
 	
 move_meteoro:                 ; neste ciclo o meteoro muda de posição
 	MOV R6, [evento_int_meteoros]
+	
+	MOV R6, 2
+	MOV R11, [JOGO]
+	CMP R6, R11
+	JZ move_meteoro
+	
 	ADD R7, 1
 	CALL desce_meteoro
 	MOV R8, 3
@@ -576,11 +671,21 @@ move_meteoro:                 ; neste ciclo o meteoro muda de posição
 desce_meteoro:
 	PUSH R6
 	PUSH R8
+	CALL deteta_colisao_rover_meteoro
+	MOV R11, DEF_EXPLOSAO
+	CMP R10, R11
+	JNZ nao_explodiu
+	;CALL apaga_objeto
+	CALL reinicia_meteoro
+	MOV [explodiu], R10
+	JMP fim_desce_meteoro
+nao_explodiu:
 	CALL apaga_objeto
 	MOV R6, [R5 + R3]
 	ADD R6, 2
 	MOV R8, [R6]
 	CALL testa_limite_inferior
+fim_desce_meteoro:
 	POP R8
 	POP R6
 	RET
@@ -592,18 +697,13 @@ testa_limite_inferior:        ; vê - se se o objeto chegou o limite inferior
 	ADD R8, R1
 	CMP R8, R5
 	JNZ proxima_linha
-reinicia_meteoro:
-	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
-	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
-	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
-	MOV R3, - 2                  ;count para ler o tamanho do meteoro
-	MOV R7, 0                    ; count para ver se é linha multipla de 3
-	call define_tipo_meteoro
-	JMP fim_testa_limites_inferior
+    CALL reinicia_meteoro
+    JMP fim_testa_limites_inferior
 proxima_linha:
 	ADD R1, 1
 fim_testa_limites_inferior:
 	;POP R1
+    MOV [LINHA_METEORO], R1
 	POP R8
 	RET
 	
@@ -614,14 +714,46 @@ define_tipo_meteoro:
 	JGE meteoro_mau
 meteoro_bom:
 	MOV R10, DEF_METEOROS_BONS
+	POP R2
 	JMP fim_tipo_meteoros
 meteoro_mau:
 	MOV R10, DEF_METEOROS_MAUS
-fim_tipo_meteoros:
 	POP R2
+fim_tipo_meteoros:
 	RET
+
+reinicia_meteoro:
+    MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
+    call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
+    SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
+    MOV [COLUNA_METEORO], R2     ; guarda o valor da coluna do meteoro
+    MOV R3, - 2                  ;count para ler o tamanho do meteoro
+    MOV R7, 0                    ; count para ver se é linha multipla de 3
+    call define_tipo_meteoro
+    RET
 	
-	
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	; Processo
+	;
+	; EXPLOSAO - Processo que APAGA A EXPLOSAO
+	; temporização marcada pela interrupção 0
+	;
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	PROCESS SP_inicial_explosao  ; indicação de que a rotina que se segue é um processo, 
+	; com indicação do valor para inicializar o SP
+explosao:                     ; processo que implementa o comportamento do boneco
+	MOV R3, [explodiu]
+	MOV R5, 0
+ciclo_explosao:
+	MOV R3, [missil_movimenta]
+	ADD R5, 1
+	CMP R5, 4
+	JNZ ciclo_explosao
+	MOV R2, 2
+	MOV [APAGA_PIXEIS], R2         ; apaga todos os pixels do ecra
+	JMP explosao
+
+
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; Processo
 	;
@@ -635,7 +767,9 @@ fim_tipo_meteoros:
 missil:                       ; processo que implementa o comportamento do boneco
 	MOV R3, [missil_disparado]   ; lê o LOCK e bloqueia até o missil ser disparado
 	; desenha missil na sua posição inicial
-	
+    MOV R3, 0
+	MOV [HOUVE_EXPLOSAO], R3
+
 	MOV R1, LINHA_INICIAL_ROVER  ; linha do missil
 	SUB R1, 1                    ; para começar em cima do rover
 	MOV [LINHA_MISSIL], R1       ; atualiza a variavel linha missil
@@ -644,15 +778,30 @@ missil:                       ; processo que implementa o comportamento do bonec
 	ADD R2, 2                    ; para começar no meio do rover
 	MOV [COLUNA_MISSIL], R2      ; atualiza a variavel linha missil
 	
+	MOV [disparo_missil], R2
+	
 	MOV R5, - 1                  ; inicializa o contador
 	
+MOV R3, 0
+	MOV [HOUVE_EXPLOSAO], R3
+	
 ciclo_missil:
-	MOV R4, DEF_MISSIL           ; endereço da tabela que define o boneco
-	CMP R5, MAX_ALCANCE_MISSIL
+	MOV R3, [HOUVE_EXPLOSAO]
+	CMP R3, 1
+	JZ missil                    ; testa se houve explusao
+	MOV R6, MAX_ALCANCE_MISSIL
+	CMP R5, R6
 	JZ missil                    ; se já estiver no calnca máximo, o missil só desaparece
+    MOV R4, DEF_MISSIL 
 	CALL desenha_objeto          ; desenha o boneco a partir da tabela
 espera_movimento_missil:
 	MOV R3, [missil_movimenta]   ; lê o LOCK e bloqueia até o missil ser movimentado
+	
+	MOV R10, 2
+	MOV R11, [JOGO]
+	CMP R10, R11
+	JZ espera_movimento_missil
+	
 	ADD R5, 1                    ; incrementa o contador
 	JMP move_cima
 	
@@ -677,14 +826,18 @@ move_missil:
 	;
 	; DISPLAY
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	PROCESS SP_inicial_display_diminuir
+	PROCESS SP_inicial_display_diminuir_tempo
+	
+display_inicia:
+	MOV R1, [modo_jogo]
 	
 display_diminuir:
 	MOV R1, [dimui_energia_a_jogar]
-	JNZ diminui_em_decimal
-	MOV R1, 0
-	MOV [dimui_energia_a_jogar], R1
-	JMP display_diminuir
+	MOV R1, 2
+	MOV R11, [JOGO]
+	CMP R1, R11
+	JZ display_diminuir
+	JMP diminui_em_decimal
 	
 diminui_em_decimal:
 	MOV R11, [DISPLAY]           ; guarda o valor atual do display
@@ -722,44 +875,138 @@ vai_diminuir:
 	JMP muda_display
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	; Processo Energia Aumenta ao Clicar
+	; Processo Energia Aumenta 10 ao Colidir com uma nave boa
 	;
 	; DISPLAY
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	PROCESS SP_inicial_display_aumentar
+	PROCESS SP_inicial_display_aumentar_colisao_boa
 	
-display_aumentar:
-	MOV R1, [aumenta_energia_clicar]
-	CMP R1, 0
-	JNZ aumenta_em_decimal
-	MOV R1, 0
-	MOV [aumenta_energia_clicar], R1
-	RET
-	
-aumenta_em_decimal:
+colisao_boa_display:
+	MOV R1, [colisao_boa]
 	MOV R11, [DISPLAY]           ; guarda o valor atual do display
 	CALL testa_para_100_aumentar
 	ADD R11, 5                   ; aumenta o registo do valor do display
 	ADD R11, 5                   ; aumenta o registo do valor do display
 	ADD R11, 5                   ; aumenta o registo do valor do display
 	ADD R11, 1                   ; aumenta o registo do valor do display
-	JMP altera_display
+	JMP aumenta_10_display
 	
 testa_para_100_aumentar:
 	MOV R1, R11
 	SHR R1, 4
 	MOV R6, 09H
 	CMP R1, R6
-	JZ vai_aumentar
+	JZ vai_para_100
+	MOV R6, 010H
+	CMP R1, R6
+	JZ vai_para_100
 	RET
-vai_aumentar:
+vai_para_100:
 	MOV R11, 0100H
-	JMP altera_display
+	JMP aumenta_10_display
 	
-altera_display:
+aumenta_10_display:
 	MOV [DISPLAYS], R11          ; altera o valor apresentado nos displays
 	MOV [DISPLAY], R11           ; grava na memória o novo valor do display
-	JMP display_aumentar         ; espera até a tecla deixar de ser pressionada
+	JMP colisao_boa_display      ; espera até a tecla deixar de ser pressionada
+	
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	; Processo Energia Aumenta ao disparar contra uma nave má
+	;
+	; DISPLAY
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	PROCESS SP_inicial_display_aumentar_acertar_nave
+	
+disparo_nave_ma_display:
+	MOV R1, [acerta_nave_ma]
+	MOV R11, [DISPLAY]           ; guarda o valor atual do display
+	MOV R1, MASCARA
+	MOV R2, R11
+	AND R2, R1
+	CALL testa_para_100
+	CMP R2, 0
+	JZ aumenta_5_registo
+	ADD R11, 5                   ; aumenta o registo do valor do display
+	ADD R11, 5                   ; aumenta o registo do valor do display
+	ADD R11, 1                   ; aumenta o registo do valor do display
+	JMP aumenta_5_display
+	
+aumenta_5_registo:
+	CALL testa_para_100
+	ADD R11, 5                   ; aumenta o registo do valor do display
+	JMP aumenta_5_display
+	
+testa_para_100:
+	MOV R6, [DISPLAY]            ; guarda o valor atual do display
+	SHR R6, 4
+	MOV R1, 09H
+	CMP R6, R1
+	JZ continua_testar
+	JGE fica_a_100
+	RET
+continua_testar:
+	MOV R1, 05H
+	CMP R2, 5
+	JGE fica_a_100
+	RET
+	
+fica_a_100:
+	MOV R11, 0100H
+	JMP aumenta_5_display
+	
+aumenta_5_display:
+	MOV [DISPLAYS], R11          ; altera o valor apresentado nos displays
+	MOV [DISPLAY], R11           ; grava na memória o novo valor do display
+	JMP disparo_nave_ma_display  ; espera até a tecla deixar de ser pressionada
+	
+	
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	; Processo Energia Diminui 5 ao mandar um missil
+	;
+	; DISPLAY
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	PROCESS SP_inicial_display_diminuir_missil
+	
+missil_display:
+	MOV R1, [disparo_missil]
+	MOV R11, [DISPLAY]           ; guarda o valor atual do display
+	MOV R6, R11
+	SHR R6, 4
+	MOV R1, 0
+	CMP R6, R1
+	JZ fica_a_0
+	
+	MOV R1, 010H
+	CMP R6, R1
+	JZ esta_a_100
+	
+	MOV R1, MASCARA
+	MOV R2, R11
+	AND R2, R1
+	CMP R2, 0
+	JNZ diminui_5_registo
+	SUB R11, 5                   ; aumenta o registo do valor do display
+	SUB R11, 5                   ; aumenta o registo do valor do display
+	SUB R11, 1                   ; aumenta o registo do valor do display
+	JMP diminui_5_display
+	
+diminui_5_registo:
+	SUB R11, 5                   ; aumenta o registo do valor do display
+	JMP diminui_5_display
+	
+fica_a_0:
+	MOV R11, 0H
+	JMP diminui_5_display
+	
+esta_a_100:
+	MOV R11, 095H
+	JMP diminui_5_display
+	
+diminui_5_display:
+	MOV [DISPLAYS], R11          ; altera o valor apresentado nos displays
+	MOV [DISPLAY], R11           ; grava na memória o novo valor do display
+	JMP missil_display           ; espera até a tecla deixar de ser pressionada
+	
 	
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -1001,93 +1248,137 @@ rot_int_energia:
 	
 	
 	
+recomeca_jogo:
+	MOV R2, INICIO_DISPLAY
+	MOV [DISPLAYS], R2
+	MOV [DISPLAY], R2
 	
+	MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+	MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 	
+	MOV R0, MODO
+	MOV [JOGO], R0
 	
+	MOV R10, 1
+	MOV [JOGO], R10
+	
+	MOV R11, 1                   ; inicializa o contador
+	MOV [RECOMECAR], R11
+	
+	RET
+
+
+
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	; Processo Energia Aumenta ao disparar contra uma nave má
+	; deteta_colisão - > Deteta se existe colisão entre o rover e um meteoro (bom )
+	; Argumentos:
 	;
-	; DISPLAY
+	;
+	;
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	PROCESS SP_inicial_display_aumentar_acertar_nave
 	
-disparo_nave_ma_display:
-	MOV R1, [disparo_nave_ma]
-	MOV R11, [DISPLAY]           ; guarda o valor atual do display
-	MOV R1, MASCARA
-	MOV R2, R11
-	AND R2, R1
-	CALL testa_para_100
-	CMP R2, 0
-	JZ aumenta_5_registo
-	ADD R11, 5                   ; aumenta o registo do valor do display
-	ADD R11, 5                   ; aumenta o registo do valor do display
-	ADD R11, 1                   ; aumenta o registo do valor do display
-	JMP aumenta_5_display
-	
-aumenta_5_registo:
-	CALL testa_para_100
-	ADD R11, 5                   ; aumenta o registo do valor do display
-	JMP aumenta_5_display
-	
-testa_para_100:
-	MOV R6, [DISPLAY]            ; guarda o valor atual do display
-	SHR R6, 4
-	MOV R1, 09H
-	CMP R6, R1
-	JGE continua_testar
-	RET
-continua_testar:
-	MOV R1, 05H
-	CMP R2, 5
-	JGE fica_a_100
-	RET
-	
-fica_a_100:
-	MOV R11, 0100H
-	JMP aumenta_5_display
-	
-aumenta_5_display:
-	MOV [DISPLAYS], R11          ; altera o valor apresentado nos displays
-	MOV [DISPLAY], R11           ; grava na memória o novo valor do display
-	JMP disparo_nave_ma_display  ; espera até a tecla deixar de ser pressionada
-	
-	
-	
-	PROCESS SP_inicial_display_diminuir_missil
-	
-missil_display:
-	MOV R1, [disparo_missil]
-	MOV R11, [DISPLAY]           ; guarda o valor atual do display
-	MOV R1, MASCARA
-	MOV R2, R11
-	AND R2, R1
-	CMP R2, 0
-	CALL testa_para_0
-	JNZ diminui_5_registo
-	SUB R11, 5                   ; aumenta o registo do valor do display
-	SUB R11, 5                   ; aumenta o registo do valor do display
-	SUB R11, 1                   ; aumenta o registo do valor do display
-	JMP diminui_5_display
-	
-diminui_5_registo:
-	CALL testa_para_100
-	SUB R11, 5                   ; aumenta o registo do valor do display
-	JMP diminui_5_display
-	
-testa_para_0:
-	MOV R6, [DISPLAY]            ; guarda o valor atual do display
-	SHR R6, 4
-	MOV R1, 0
-	CMP R6, R1
-	JZ fica_a_0
+deteta_colisao_rover_meteoro:
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	PUSH R4
+	PUSH R5
+	PUSH R6
+	PUSH R7
+	PUSH R11
+nao_colisao_cima:
+	MOV R1, [LINHA_METEORO]      ; numero da linha inicial do meteoro
+	MOV R2, ALTURA_METEORO_5     ; altura do meteoro
+	ADD R2, R1                   ; linha inferior do meteoro
+	MOV R3, [LINHA_ROVER]        ; linha inicial do rover
+	MOV R4, ALTURA_ROVER         ; altura do Rover
+	;SUB R3, R4 ; linha superior do Rover
+	CMP R2, R3                   ; se a linha inferior do meteoro for superior à linha mais acima do Rover, não colidem nesta situacao
+	JLT deteta_colisao_disparo
+nao_colisao_lados:
+	MOV R1, [COLUNA_METEORO]     ; numero da coluna inicial do meteoro
+	MOV R2, LARGURA_METEORO_5    ; largura do meteoro
+	ADD R2, R1                   ; coluna onde o meteoro termina
+	MOV R3, [COLUNA_ROVER]       ; coluna onde o rover se encontra
+	MOV R4, LARGURA_ROVER        ; largura do Rover
+	ADD R4, R3                   ; coluna onde o rover termina
+nao_colisao_direita:
+	CMP R1, R4
+	JGT deteta_colisao_disparo
+nao_colisao_esquerda:
+	CMP R3, R2
+	JGT deteta_colisao_disparo
+	JMP colisao_rover
+deteta_colisao_disparo:
+	MOV R1, [COLUNA_METEORO]     ; numero da coluna inicial do meteoro
+	MOV R7, [COLUNA_MISSIL]      ; coluna onde o missil está a ser disparado
+	CMP R1, R7                   ; se a coluna mais a esquerda do meteoro estiver depois da do missil, n há colisão
+	JGT fim_deteta_colisao       ; não há colisão
+	MOV R1, [COLUNA_METEORO]     ; numero da coluna inicial do meteoro
+	MOV R2, LARGURA_METEORO_5    ; largura do meteoro
+	ADD R2, R1                   ; coluna onde o meteoro termina
+	CMP R2, R7                   ; se a coluna mais a direita onde o meteoro estiver antes da do missil, nao há colisão
+	JLT fim_deteta_colisao
+	MOV R7, [LINHA_MISSIL]
+	MOV R1, [LINHA_METEORO]      ; numero da linha inicial do meteoro
+	MOV R2, ALTURA_METEORO_5     ; altura do meteoro
+	ADD R2, R1                   ; linha inferior do meteoro
+	CMP R2, R7
+	JLT fim_deteta_colisao
+	JMP colisao_disparo
+fim_deteta_colisao:
+	POP R11
+	POP R7
+	POP R6
+	POP R5
+	POP R4
+	POP R3
+	POP R2
+	POP R1
 	RET
 	
-fica_a_0:
-	MOV R11, 0H
-	JMP diminui_5_display
 	
-diminui_5_display:
-	MOV [DISPLAYS], R11          ; altera o valor apresentado nos displays
-	MOV [DISPLAY], R11           ; grava na memória o novo valor do display
-	JMP missil_display           ; espera até a tecla deixar de ser pressionada
+colisao_rover:                ; o que fazer quando o objeto colide
+	MOV R1, [LINHA_METEORO]
+	MOV R2, [COLUNA_METEORO]
+	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
+	CALL apaga_objeto
+	MOV R11, DEF_METEOROS_BONS
+	CMP R10, R11
+	JZ colisao_meteoro_bom
+	JMP colisao_meteoro_mau
+colisao_meteoro_bom:
+	MOV [aumenta_energia], R11
+	
+colisao_meteoro_mau:          ;há de ser game over
+	
+fim_colisao_rover:
+	MOV R2, [COLUNA_METEORO]
+	MOV [ANTIGA_COLUNA_METEORO], R2
+	JMP fim_deteta_colisao
+	
+colisao_disparo:
+	MOV R3, 1
+	MOV [HOUVE_EXPLOSAO], R3     ; avisa o procedimento missil que houve uma explosao
+	MOV R1, [LINHA_METEORO]
+	MOV R2, [COLUNA_METEORO]
+	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
+	CALL apaga_objeto            ; apaga o meteoro
+	MOV R1, [LINHA_MISSIL]
+	MOV R2, [COLUNA_MISSIL]
+	MOV R4, DEF_MISSIL
+	CALL apaga_objeto            ; apaga o missil
+	MOV R1, [LINHA_METEORO]
+	MOV R2, [COLUNA_METEORO]
+	MOV R4, DEF_EXPLOSAO
+	CALL desenha_objeto
+	MOV R11, DEF_METEOROS_MAUS
+	CMP R10, R11
+	JZ colisao_disparo_meteoro_mau
+	MOV R10, DEF_EXPLOSAO
+	JMP fim_deteta_colisao
+colisao_disparo_meteoro_mau:
+	; diminuir energia
+	MOV R10, DEF_EXPLOSAO
+	JMP fim_deteta_colisao
+	
