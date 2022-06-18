@@ -29,6 +29,7 @@
 	SEL_ECRA EQU 6004H           ; para selecionar o ecrã onde vai ser desenhado o objeto
 	SELECIONA_SOM EQU 605AH      ; endereço do comando para selecionar um som de fundo
 	APAGA_PIXEIS EQU 6000H       ; Apaga todos os pixels do ecrã especificado
+	SELECIONA_ECRA_VISUALIZADO EQU 6006H
 	
 	
 	DISPLAYS EQU 0A000H          ; endereço do periférico que liga aos displays
@@ -91,16 +92,17 @@
 	ALTURA_MISSIL EQU 1
 	
 	ECRA_ROVER EQU 0             ; ecrã especificado para o Rover
-	ECRA_METEORO_MAU EQU 1           ; ecrã especificado para o Meteoro
-	ECRA_METEORO_BOM EQU 2           ; ecrã especificado para o Meteoro
+	ECRA_METEORO_MAU EQU 1       ; ecrã especificado para o Meteoro
+	ECRA_METEORO_BOM EQU 2       ; ecrã especificado para o Meteoro
 	ECRA_MISSIL EQU 3
 	ECRA_EXPLOSAO EQU 4
 	
 	N_METEOROS EQU 4             ; número de meteoros (máximo 4)
 	
 	ATRASO_ROVER EQU 70
-	MAX_ALCANCE_MISSIL EQU 0FH
+	MAX_ALCANCE_MISSIL EQU 07H
 	
+	;NIVEIS_METEORO EQU 0AH
 	NIVEIS_METEORO EQU 08H
 	DIVISAO_MAU_OU_BOM EQU 2
 	
@@ -181,15 +183,22 @@ DEF_ROVER:                    ; tabela que define o Rover (cor, largura, pixels)
 	WORD COR_AMARELA, COR_AMARELA, COR_AMARELA, COR_AMARELA, COR_AMARELA
 	WORD 0, COR_AMARELA, 0, COR_AMARELA, 0
 	
+	;DEF_METEORO_INICIAL:
+	; WORD ECRA_METEORO ; ecrã do meteoro
+	; WORD LARGURA_METEORO_1 ; largura do Meteoro Mau
+	; WORD ALTURA_METEORO_1 ; altura do Meteoro Mau
+	; WORD 0
+	; WORD 0
+	
 DEF_METEORO_INICIO_1:
-	WORD ECRA_METEORO_MAU            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU        ; ecrã do meteoro
 	WORD LARGURA_METEORO_1       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_1        ; altura do Meteoro Mau
 	WORD COR_CINZENTO
 	WORD COR_CINZENTO
 	
 DEF_METEORO_INICIO_2:
-	WORD ECRA_METEORO_MAU            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU        ; ecrã do meteoro
 	WORD LARGURA_METEORO_2       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_2        ; altura do Meteoro Mau
 	WORD COR_CINZENTO, COR_CINZENTO
@@ -197,7 +206,7 @@ DEF_METEORO_INICIO_2:
 	
 	
 DEF_METEORO_BOM_3:
-	WORD ECRA_METEORO_BOM            ; ecrã do meteoro
+	WORD ECRA_METEORO_BOM        ; ecrã do meteoro
 	WORD LARGURA_METEORO_3       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_3        ; altura do Meteoro Mau
 	WORD 0, COR_VERDE, 0
@@ -205,7 +214,7 @@ DEF_METEORO_BOM_3:
 	WORD 0, COR_VERDE, 0
 	
 DEF_METEORO_BOM_4:
-	WORD ECRA_METEORO_BOM            ; ecrã do meteoro
+	WORD ECRA_METEORO_BOM        ; ecrã do meteoro
 	WORD LARGURA_METEORO_4       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_4        ; altura do Meteoro Mau
 	WORD 0, COR_VERDE, COR_VERDE, 0
@@ -214,7 +223,7 @@ DEF_METEORO_BOM_4:
 	WORD 0, COR_VERDE, COR_VERDE, 0
 	
 DEF_METEORO_BOM_5:            ; tabela que define o meteoro mau (cor, largura, pixels)
-	WORD ECRA_METEORO_BOM            ; ecrã do meteoro
+	WORD ECRA_METEORO_BOM        ; ecrã do meteoro
 	WORD LARGURA_METEORO_5       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_5
 	WORD 0, COR_VERDE, COR_VERDE, COR_VERDE, 0
@@ -224,7 +233,7 @@ DEF_METEORO_BOM_5:            ; tabela que define o meteoro mau (cor, largura, p
 	WORD 0, COR_VERDE, COR_VERDE, COR_VERDE, 0
 	
 DEF_METEORO_MAU_3:
-	WORD ECRA_METEORO_MAU            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU        ; ecrã do meteoro
 	WORD LARGURA_METEORO_3       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_3        ; altura do Meteoro Mau
 	WORD COR_VERMELHA, 0, COR_VERMELHA
@@ -232,7 +241,7 @@ DEF_METEORO_MAU_3:
 	WORD COR_VERMELHA, 0, COR_VERMELHA
 	
 DEF_METEORO_MAU_4:
-	WORD ECRA_METEORO_MAU            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU        ; ecrã do meteoro
 	WORD LARGURA_METEORO_4       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_4        ; altura do Meteoro Mau
 	WORD COR_VERMELHA, 0, 0, COR_VERMELHA
@@ -241,7 +250,7 @@ DEF_METEORO_MAU_4:
 	WORD COR_VERMELHA, 0, 0, COR_VERMELHA
 	
 DEF_METEORO_MAU_5:            ; tabela que define o meteoro mau (cor, largura, pixels)
-	WORD ECRA_METEORO_MAU            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU        ; ecrã do meteoro
 	WORD LARGURA_METEORO_5       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_5        ; altura do Meteoro Mau
 	WORD COR_VERMELHA, 0, 0, 0, COR_VERMELHA
@@ -251,6 +260,7 @@ DEF_METEORO_MAU_5:            ; tabela que define o meteoro mau (cor, largura, p
 	WORD COR_VERMELHA, 0, 0, 0, COR_VERMELHA
 	
 DEF_METEOROS_MAUS:
+	;WORD DEF_METEORO_INICIAL
 	WORD DEF_METEORO_INICIO_1
 	WORD DEF_METEORO_INICIO_2
 	WORD DEF_METEORO_MAU_3
@@ -258,6 +268,7 @@ DEF_METEOROS_MAUS:
 	WORD DEF_METEORO_MAU_5
 	
 DEF_METEOROS_BONS:
+	;WORD DEF_METEORO_INICIAL
 	WORD DEF_METEORO_INICIO_1
 	WORD DEF_METEORO_INICIO_2
 	WORD DEF_METEORO_BOM_3
@@ -298,7 +309,13 @@ DISPLAY: WORD INICIO_DISPLAY  ; variável que indica o valor do display
 	
 JOGO: WORD MODO
 	
-RECOMECAR: WORD ATIVO
+RECOMECAR_ROVER: WORD ATIVO
+RECOMECAR_MISSIL: WORD ATIVO
+RECOMECAR_METEOROS: 
+	WORD ATIVO
+	WORD ATIVO
+	WORD ATIVO
+	WORD ATIVO
 	
 meteoro_SP_tab:
 	WORD SP_inicial_meteoro_0
@@ -490,16 +507,27 @@ recomeca_jogo:
 	MOV [DISPLAYS], R2
 	MOV [DISPLAY], R2
 	
-	MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+	;MOV [APAGA_AVISO], R1 ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
 	MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 	
 	MOV R10, 1
 	MOV [JOGO], R10
 	
 	MOV R11, 1                   ; inicializa o contador
-	MOV [RECOMECAR], R11
+	MOV [RECOMECAR_ROVER], R11
+	MOV [RECOMECAR_MISSIL], R11
+
+	MOV R1, N_METEOROS
+loop_reinicia_meteoros:
+	SUB R1, 1
+	MOV R9, RECOMECAR_METEOROS
+	MOV R8, R1
+	SHL R8, 1
+	MOV [R9 + R8], R11
+	CMP R1, 0
+	JNZ loop_reinicia_meteoros
 	
-	REt
+	RET
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; Processo
@@ -615,7 +643,7 @@ espera_movimento_rover:
 	CMP R10, R11
 	JZ espera_movimento_rover
 	
-	MOV R11, [RECOMECAR]
+	MOV R11, [RECOMECAR_ROVER]
 	MOV R10, 1
 	CMP R11, R10
 	JZ reinicia_rover
@@ -660,7 +688,7 @@ reinicia_rover:
 	MOV [COLUNA_ROVER], R2       ; atualiza a coluna atual do rover
 	CALL desenha_objeto          ; desenha o boneco a partir da tabela
 	MOV R11, 0
-	MOV [RECOMECAR], R11
+	MOV [RECOMECAR_ROVER], R11
 	JMP espera_movimento_rover
 	
 	
@@ -678,15 +706,20 @@ meteoro:                      ; processo que implementa o comportamento do bonec
 	
 	MOV R8, R1                   ; confirmar se pode ser R8
 	SHL R8, 1
+
 	MOV R9, meteoro_SP_tab
 	MOV SP, [R9 + R8]
-	
+
 	MOV R9, houve_colisao
 	MOV R1, 0
 	MOV [R9 + R8], R1
 	
+	MOV R6, [modo_jogo]
+inicializa_meteoro:
+	
+	MOV R1, LINHA_INICIAL_METEORO
 	MOV R9, linhas_meteoros
-	MOV R1, [R9 + R8]
+	MOV [R9 + R8], R1
 	
 	MOV R9, colunas_meteoros
 	CALL gera_aleatorio
@@ -700,24 +733,21 @@ meteoro:                      ; processo que implementa o comportamento do bonec
 	MOV [R9 + R8], R10
 	
 	
-	
-	;MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
-	;CALL gera_aleatorio ; gera numero aleatorio entre 0 e 7
-	;SHL R2, 3 ; coluna do meteoro dependendo do numero anterior gerado
-	
-	;MOV R9, colunas_meteoros
-	;MOV [R9 + R8], R2 ; guarda o valor da coluna do meteoro
-	
-	;MOV R3, - 2 ;count para ler o tamanho do meteoro
-	;MOV R7, 0 ; count para ver se é linha multipla de 3
-	;CALL define_tipo_meteoro
-	MOV R6, [modo_jogo]
+	MOV R9, RECOMECAR_METEOROS
+	MOV R11, 0
+	MOV [R9 + R8], R11
 	
 aumenta_meteoro:
 	ADD R3, 2
 ciclo_meteoro:
 	
 	YIELD
+	
+	MOV R9, RECOMECAR_METEOROS
+	MOV R11, [R9 + R8]
+	MOV R6, 1
+	CMP R11, R6
+	JZ inicializa_meteoro
 	
 	MOV R5, R10                  ; endereço da tabela que define o boneco
 	MOV R4, [R5 + R3]            ; lê a tabela de meteoros
@@ -844,7 +874,6 @@ ciclo_explosao:
 	MOV R2, ECRA_EXPLOSAO
 	MOV [APAGA_PIXEIS], R2       ; apaga todos os pixels do ecra
 	JMP explosao
-	
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; deteta_colisão - > Deteta se existe colisão entre o rover e um meteoro (bom )
@@ -981,7 +1010,7 @@ colisao_disparo:
 	CALL apaga_objeto            ; apaga o missil
 	MOV R1, MAX_LINHA
 	MOV [LINHA_MISSIL], R1
-
+	
 	MOV R9, linhas_meteoros
 	MOV R1, [R9 + R8]
 	MOV R9, colunas_meteoros
@@ -1012,7 +1041,7 @@ colisao_disparo_meteoro_mau:
 missil:                       ; processo que implementa o comportamento do boneco
 	MOV R3, 0
 	MOV [HOUVE_EXPLOSAO], R3
-	MOV R1, MAX_LINHA  ; linha do missil
+	MOV R1, MAX_LINHA            ; linha do missil
 	MOV [LINHA_MISSIL], R1       ; atualiza a variavel linha missil
 	MOV R3, [missil_disparado]   ; lê o LOCK e bloqueia até o missil ser disparado
 	; desenha missil na sua posição inicial
@@ -1032,7 +1061,15 @@ missil:                       ; processo que implementa o comportamento do bonec
 	MOV R3, 0
 	MOV [HOUVE_EXPLOSAO], R3
 	
+	MOV R11, 0
+	MOV [RECOMECAR_MISSIL], R11
+	
 ciclo_missil:
+	MOV R11, [RECOMECAR_MISSIL]
+	MOV R10, 1
+	CMP R11, R10
+	JZ missil
+	
 	MOV R3, [HOUVE_EXPLOSAO]
 	CMP R3, 1
 	JZ missil                    ; testa se houve explusao
@@ -1297,6 +1334,8 @@ desenha_pixels:               ; desenha os pixels do objeto a partir da tabela
 	ADD R1, 1
 	SUB R6, 1                    ; menos uma linha para percorrer
 	JNZ obtem_largura_desenha    ; continua até percorrer toda a altura do objeto
+	MOV R9, ECRA_METEORO_MAU
+	MOV [SELECIONA_ECRA_VISUALIZADO], R9
 	POP R9
 	POP R8
 	POP R7
