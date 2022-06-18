@@ -29,7 +29,7 @@
 	SEL_ECRA EQU 6004H           ; para selecionar o ecrã onde vai ser desenhado o objeto
 	SELECIONA_SOM EQU 605AH      ; endereço do comando para selecionar um som de fundo
 	APAGA_PIXEIS EQU 6000H       ; Apaga todos os pixels do ecrã especificado
-	SELECIONA_ECRA_VISUALIZADO EQU 6006H 
+	SELECIONA_ECRA_VISUALIZADO EQU 6006H
 	
 	
 	DISPLAYS EQU 0A000H          ; endereço do periférico que liga aos displays
@@ -92,14 +92,18 @@
 	ALTURA_MISSIL EQU 1
 	
 	ECRA_ROVER EQU 0             ; ecrã especificado para o Rover
-	ECRA_METEORO EQU 2           ; ecrã especificado para o Meteoro
-	ECRA_EXPLOSAO EQU 3
-	ECRA_MISSIL EQU 1
+	ECRA_METEORO_MAU EQU 1       ; ecrã especificado para o Meteoro
+	ECRA_METEORO_BOM EQU 2       ; ecrã especificado para o Meteoro
+	ECRA_MISSIL EQU 3
+	ECRA_EXPLOSAO EQU 4
+	
+	N_METEOROS EQU 4             ; número de meteoros (máximo 4)
 	
 	ATRASO_ROVER EQU 70
 	MAX_ALCANCE_MISSIL EQU 07H
 	
-	NIVEIS_METEORO EQU 0AH
+	;NIVEIS_METEORO EQU 0AH
+	NIVEIS_METEORO EQU 08H
 	DIVISAO_MAU_OU_BOM EQU 2
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -141,9 +145,6 @@ SP_inicial_rover:             ; este é o endereço com que o SP deste processo 
 	STACK 100H                   ; espaço reservado para a pilha do processo "boneco", instância 1
 SP_inicial_missil:            ; este é o endereço com que o SP deste processo deve ser inicializado
 	
-	STACK 100H                   ; espaço reservado para a pilha do processo "boneco", instância 2
-SP_inicial_meteoro:           ; este é o endereço com que o SP deste processo deve ser inicializado
-	
 	STACK 100H
 SP_inicial_display_diminuir_tempo:
 	
@@ -159,6 +160,19 @@ SP_inicial_display_diminuir_missil:
 	STACK 100H
 SP_inicial_explosao:
 	
+	STACK 100H                   ; espaço reservado para a pilha do processo "boneco", instância 2
+SP_inicial_meteoro_0:         ; este é o endereço com que o SP deste processo deve ser inicializado
+	
+	STACK 100H                   ; espaço reservado para a pilha do processo "boneco", instância 2
+SP_inicial_meteoro_1:         ; este é o endereço com que o SP deste processo deve ser inicializado
+	
+	STACK 100H                   ; espaço reservado para a pilha do processo "boneco", instância 2
+SP_inicial_meteoro_2:         ; este é o endereço com que o SP deste processo deve ser inicializado
+	
+	STACK 100H                   ; espaço reservado para a pilha do processo "boneco", instância 2
+SP_inicial_meteoro_3:         ; este é o endereço com que o SP deste processo deve ser inicializado
+	
+	
 	
 DEF_ROVER:                    ; tabela que define o Rover (cor, largura, pixels)
 	WORD ECRA_ROVER              ; ecrã do Rover
@@ -169,22 +183,22 @@ DEF_ROVER:                    ; tabela que define o Rover (cor, largura, pixels)
 	WORD COR_AMARELA, COR_AMARELA, COR_AMARELA, COR_AMARELA, COR_AMARELA
 	WORD 0, COR_AMARELA, 0, COR_AMARELA, 0
 	
-DEF_METEORO_INICIAL:
-	WORD ECRA_METEORO            ; ecrã do meteoro
-	WORD LARGURA_METEORO_1       ; largura do Meteoro Mau
-	WORD ALTURA_METEORO_1        ; altura do Meteoro Mau
-	WORD 0
-	WORD 0
+	;DEF_METEORO_INICIAL:
+	; WORD ECRA_METEORO ; ecrã do meteoro
+	; WORD LARGURA_METEORO_1 ; largura do Meteoro Mau
+	; WORD ALTURA_METEORO_1 ; altura do Meteoro Mau
+	; WORD 0
+	; WORD 0
 	
 DEF_METEORO_INICIO_1:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU        ; ecrã do meteoro
 	WORD LARGURA_METEORO_1       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_1        ; altura do Meteoro Mau
 	WORD COR_CINZENTO
 	WORD COR_CINZENTO
 	
 DEF_METEORO_INICIO_2:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU        ; ecrã do meteoro
 	WORD LARGURA_METEORO_2       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_2        ; altura do Meteoro Mau
 	WORD COR_CINZENTO, COR_CINZENTO
@@ -192,7 +206,7 @@ DEF_METEORO_INICIO_2:
 	
 	
 DEF_METEORO_BOM_3:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_BOM        ; ecrã do meteoro
 	WORD LARGURA_METEORO_3       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_3        ; altura do Meteoro Mau
 	WORD 0, COR_VERDE, 0
@@ -200,7 +214,7 @@ DEF_METEORO_BOM_3:
 	WORD 0, COR_VERDE, 0
 	
 DEF_METEORO_BOM_4:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_BOM        ; ecrã do meteoro
 	WORD LARGURA_METEORO_4       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_4        ; altura do Meteoro Mau
 	WORD 0, COR_VERDE, COR_VERDE, 0
@@ -209,7 +223,7 @@ DEF_METEORO_BOM_4:
 	WORD 0, COR_VERDE, COR_VERDE, 0
 	
 DEF_METEORO_BOM_5:            ; tabela que define o meteoro mau (cor, largura, pixels)
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_BOM        ; ecrã do meteoro
 	WORD LARGURA_METEORO_5       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_5
 	WORD 0, COR_VERDE, COR_VERDE, COR_VERDE, 0
@@ -219,7 +233,7 @@ DEF_METEORO_BOM_5:            ; tabela que define o meteoro mau (cor, largura, p
 	WORD 0, COR_VERDE, COR_VERDE, COR_VERDE, 0
 	
 DEF_METEORO_MAU_3:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU        ; ecrã do meteoro
 	WORD LARGURA_METEORO_3       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_3        ; altura do Meteoro Mau
 	WORD COR_VERMELHA, 0, COR_VERMELHA
@@ -227,7 +241,7 @@ DEF_METEORO_MAU_3:
 	WORD COR_VERMELHA, 0, COR_VERMELHA
 	
 DEF_METEORO_MAU_4:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU        ; ecrã do meteoro
 	WORD LARGURA_METEORO_4       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_4        ; altura do Meteoro Mau
 	WORD COR_VERMELHA, 0, 0, COR_VERMELHA
@@ -236,7 +250,7 @@ DEF_METEORO_MAU_4:
 	WORD COR_VERMELHA, 0, 0, COR_VERMELHA
 	
 DEF_METEORO_MAU_5:            ; tabela que define o meteoro mau (cor, largura, pixels)
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU        ; ecrã do meteoro
 	WORD LARGURA_METEORO_5       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_5        ; altura do Meteoro Mau
 	WORD COR_VERMELHA, 0, 0, 0, COR_VERMELHA
@@ -246,7 +260,7 @@ DEF_METEORO_MAU_5:            ; tabela que define o meteoro mau (cor, largura, p
 	WORD COR_VERMELHA, 0, 0, 0, COR_VERMELHA
 	
 DEF_METEOROS_MAUS:
-	WORD DEF_METEORO_INICIAL
+	;WORD DEF_METEORO_INICIAL
 	WORD DEF_METEORO_INICIO_1
 	WORD DEF_METEORO_INICIO_2
 	WORD DEF_METEORO_MAU_3
@@ -254,7 +268,7 @@ DEF_METEOROS_MAUS:
 	WORD DEF_METEORO_MAU_5
 	
 DEF_METEOROS_BONS:
-	WORD DEF_METEORO_INICIAL
+	;WORD DEF_METEORO_INICIAL
 	WORD DEF_METEORO_INICIO_1
 	WORD DEF_METEORO_INICIO_2
 	WORD DEF_METEORO_BOM_3
@@ -297,25 +311,41 @@ JOGO: WORD MODO
 	
 RECOMECAR_ROVER: WORD ATIVO
 RECOMECAR_MISSIL: WORD ATIVO
-RECOMECAR_METEORO: WORD ATIVO
+RECOMECAR_METEOROS: 
+	WORD ATIVO
+	WORD ATIVO
+	WORD ATIVO
+	WORD ATIVO
 	
-linha_boneco:                 ; linha em que cada boneco está (inicializada com a linha inicial)
-	WORD LINHA_BONECO_0
-	WORD LINHA_BONECO_1
-	WORD LINHA_BONECO_2
-	WORD LINHA_BONECO_3
+meteoro_SP_tab:
+	WORD SP_inicial_meteoro_0
+	WORD SP_inicial_meteoro_1
+	WORD SP_inicial_meteoro_2
+	WORD SP_inicial_meteoro_3
 	
-coluna_boneco:                ; coluna em que cada boneco está (inicializada com a coluna inicial)
-	WORD COLUNA
-	WORD COLUNA
-	WORD COLUNA
-	WORD COLUNA
+linhas_meteoros:              ; linha em que cada boneco está (inicializada com a linha inicial)
+	WORD LINHA_INICIAL_METEORO
+	WORD LINHA_INICIAL_METEORO
+	WORD LINHA_INICIAL_METEORO
+	WORD LINHA_INICIAL_METEORO
 	
-sentido_movimento:            ; sentido movimento de cada boneco ( + 1 para a direita, - 1 para a esquerda)
-	WORD 1
-	WORD - 1
-	WORD 1
-	WORD - 1
+colunas_meteoros:             ; coluna em que cada boneco está (inicializada com a coluna inicial)
+	WORD COLUNA_INICIAL_METEORO
+	WORD COLUNA_INICIAL_METEORO
+	WORD COLUNA_INICIAL_METEORO
+	WORD COLUNA_INICIAL_METEORO
+	
+defs_meteoros:
+	WORD DEF_METEORO_MAU_5
+	WORD DEF_METEORO_MAU_5
+	WORD DEF_METEORO_MAU_5
+	WORD DEF_METEORO_MAU_5
+	
+houve_colisao:
+	WORD 0
+	WORD 0
+	WORD 0
+	WORD 0
 	
 	; Tabela das rotinas de interrupção
 tab:
@@ -391,11 +421,17 @@ inicio:
 	CALL disparo_nave_ma_display
 	CALL missil_display
 	
+	MOV R1, N_METEOROS
+loop_meteoros:
+	SUB R1, 1
+	CALL meteoro
+	CMP R1, 0
+	JNZ loop_meteoros
+	
 	CALL explosao
 	
 	CALL rover                   ; cria o processo rover
 	CALL missil                  ; cria o processo missil
-	CALL meteoro
 	
 	MOV [APAGA_AVISO], R1        ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
 	MOV [APAGA_ECRÃ], R1         ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
@@ -480,9 +516,18 @@ recomeca_jogo:
 	MOV R11, 1                   ; inicializa o contador
 	MOV [RECOMECAR_ROVER], R11
 	MOV [RECOMECAR_MISSIL], R11
-	MOV [RECOMECAR_METEORO], R11
+
+	MOV R1, N_METEOROS
+loop_reinicia_meteoros:
+	SUB R1, 1
+	MOV R9, RECOMECAR_METEOROS
+	MOV R8, R1
+	SHL R8, 1
+	MOV [R9 + R8], R11
+	CMP R1, 0
+	JNZ loop_reinicia_meteoros
 	
-	REt
+	RET
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; Processo
@@ -655,27 +700,42 @@ reinicia_rover:
 	;
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	
-	PROCESS SP_inicial_meteoro   ; indicação de que a rotina que se segue é um processo, 
+	PROCESS SP_inicial_meteoro_0 ; indicação de que a rotina que se segue é um processo, 
 	; com indicação do valor para inicializar o SP
 meteoro:                      ; processo que implementa o comportamento do boneco
-	; desenha o boneco na sua posição inicial
+	
+	MOV R8, R1                   ; confirmar se pode ser R8
+	SHL R8, 1
+
+	MOV R9, meteoro_SP_tab
+	MOV SP, [R9 + R8]
+
+	MOV R9, houve_colisao
 	MOV R1, 0
-	MOV [HOUVE_COLISAO], R1
+	MOV [R9 + R8], R1
+	
 	MOV R6, [modo_jogo]
 inicializa_meteoro:
-	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
-	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
-	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
 	
-	MOV [COLUNA_METEORO], R2     ; guarda o valor da coluna do meteoro
-	MOV [ANTIGA_COLUNA_METEORO], R2 ; guarda o valor da coluna do meteoro
+	MOV R1, LINHA_INICIAL_METEORO
+	MOV R9, linhas_meteoros
+	MOV [R9 + R8], R1
+	
+	MOV R9, colunas_meteoros
+	CALL gera_aleatorio
+	SHL R2, 3
+	MOV [R9 + R8], R2
 	
 	MOV R3, - 2                  ;count para ler o tamanho do meteoro
-	MOV R7, -1                    ; count para ver se é linha multipla de 3
-	call define_tipo_meteoro
+	MOV R7, 0                    ; count para ver se é linha multipla de 3
+	CALL define_tipo_meteoro
+	MOV R9, defs_meteoros
+	MOV [R9 + R8], R10
 	
+	
+	MOV R9, RECOMECAR_METEOROS
 	MOV R11, 0
-	MOV [RECOMECAR_METEORO], R11
+	MOV [R9 + R8], R11
 	
 aumenta_meteoro:
 	ADD R3, 2
@@ -683,7 +743,8 @@ ciclo_meteoro:
 	
 	YIELD
 	
-	MOV R11, [RECOMECAR_METEORO]
+	MOV R9, RECOMECAR_METEOROS
+	MOV R11, [R9 + R8]
 	MOV R6, 1
 	CMP R11, R6
 	JZ inicializa_meteoro
@@ -702,8 +763,8 @@ move_meteoro:                 ; neste ciclo o meteoro muda de posição
 	
 	ADD R7, 1
 	CALL desce_meteoro
-	MOV R8, 3
-	MOD R7, R8
+	MOV R9, 3
+	MOD R7, R9
 	CMP R7, 0
 	JNZ ciclo_meteoro
 	MOV R9, NIVEIS_METEORO
@@ -713,25 +774,27 @@ move_meteoro:                 ; neste ciclo o meteoro muda de posição
 	
 desce_meteoro:
 	PUSH R6
-	PUSH R8
+	PUSH R9
 	CALL deteta_colisao_rover_meteoro
 	MOV R11, DEF_EXPLOSAO
 	CMP R10, R11
 	JZ meteoro_explodiu
-	MOV R11, [HOUVE_COLISAO]
+	MOV R9, houve_colisao
+	MOV R11, [R9 + R8]
 	CMP R11, 1
 	JZ meteoro_colidiu
 	CALL apaga_objeto
 	MOV R6, [R5 + R3]
 	ADD R6, 2
-	MOV R8, [R6]
+	MOV R9, [R6]
 	CALL testa_limite_inferior
 	JMP fim_desce_meteoro
 meteoro_colidiu:
 	CALL apaga_objeto
 	CALL reinicia_meteoro
+	MOV R9, houve_colisao
 	MOV R11, 0
-	MOV [HOUVE_COLISAO], R11
+	MOV [R9 + R8], R11
 	JMP fim_desce_meteoro
 	;CALL apaga_objeto
 meteoro_explodiu:
@@ -739,16 +802,16 @@ meteoro_explodiu:
 	MOV [explodiu], R10
 	JMP fim_desce_meteoro
 fim_desce_meteoro:
-	POP R8
+	POP R9
 	POP R6
 	RET
 	
 testa_limite_inferior:        ; vê - se se o objeto chegou o limite inferior
-	PUSH R8                      ; suposto ser a altura do objeto
+	PUSH R9                      ; suposto ser a altura do objeto
 	;PUSH R1 ; suposto ser a linha do meteoro
 	MOV R5, MAX_LINHA
-	ADD R8, R1
-	CMP R8, R5
+	ADD R9, R1
+	CMP R9, R5
 	JNZ proxima_linha
 	CALL reinicia_meteoro
 	JMP fim_testa_limites_inferior
@@ -756,8 +819,9 @@ proxima_linha:
 	ADD R1, 1
 fim_testa_limites_inferior:
 	;POP R1
-	MOV [LINHA_METEORO], R1
-	POP R8
+	MOV R9, linhas_meteoros
+	MOV [R9 + R8], R1
+	POP R9
 	RET
 	
 define_tipo_meteoro:
@@ -777,12 +841,17 @@ fim_tipo_meteoros:
 	
 reinicia_meteoro:
 	MOV R1, LINHA_INICIAL_METEORO ; linha do meteoro
+	MOV R9, linhas_meteoros
+	MOV [R9 + R8], R1
 	call gera_aleatorio          ; gera numero aleatorio entre 0 e 7
 	SHL R2, 3                    ; coluna do meteoro dependendo do numero anterior gerado
-	MOV [COLUNA_METEORO], R2     ; guarda o valor da coluna do meteoro
+	MOV R9, colunas_meteoros
+	MOV [R9 + R8], R2            ; guarda o valor da coluna do meteoro
 	MOV R3, - 2                  ;count para ler o tamanho do meteoro
 	MOV R7, 0                    ; count para ver se é linha multipla de 3
 	call define_tipo_meteoro
+	MOV R9, defs_meteoros
+	MOV [R9 + R8], R10
 	RET
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -806,6 +875,158 @@ ciclo_explosao:
 	MOV [APAGA_PIXEIS], R2       ; apaga todos os pixels do ecra
 	JMP explosao
 	
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	; deteta_colisão - > Deteta se existe colisão entre o rover e um meteoro (bom )
+	; Argumentos:
+	; - > LINHA METEORO
+	; - > ALTURA_METEORO_5
+	; - > LINHA_ROVER
+	; - > ALTURA_ROVER
+	; - > COLUNA_METEORO
+	; - > LARGURA_METEORO_5
+	; - > COLUNA_ROVER
+	; - > COLUNA_MISSIL
+	; - > LINHA_MISSIL
+	;
+	;
+	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+	
+deteta_colisao_rover_meteoro:
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	PUSH R4
+	PUSH R5
+	PUSH R6
+	PUSH R7
+	PUSH R8
+	PUSH R9
+	;PUSH R10
+	PUSH R11
+	
+	
+nao_colisao_cima:
+	MOV R9, linhas_meteoros
+	MOV R1, [R9 + R8]            ; numero da linha inicial do meteoro
+	MOV R2, ALTURA_METEORO_5     ; altura do meteoro
+	SUB R2, 1
+	ADD R2, R1                   ; linha inferior do meteoro
+	MOV R3, [LINHA_ROVER]        ; linha inicial do rover
+	MOV R4, ALTURA_ROVER         ; altura do Rover
+	;SUB R3, R4 ; linha superior do Rover
+	CMP R2, R3                   ; se a linha inferior do meteoro for superior à linha mais acima do Rover, não colidem nesta situacao
+	JLT deteta_colisao_disparo
+nao_colisao_lados:
+	MOV R9, colunas_meteoros
+	MOV R1, [R9 + R8]            ; numero da coluna inicial do meteoro
+	MOV R2, LARGURA_METEORO_5    ; largura do meteoro
+	SUB R2, 1
+	ADD R2, R1                   ; coluna onde o meteoro termina
+	MOV R3, [COLUNA_ROVER]       ; coluna onde o rover se encontra
+	MOV R4, LARGURA_ROVER        ; largura do Rover
+	SUB R4, 1
+	ADD R4, R3                   ; coluna onde o rover termina
+nao_colisao_direita:
+	CMP R1, R4
+	JGT deteta_colisao_disparo
+nao_colisao_esquerda:
+	CMP R3, R2
+	JGT deteta_colisao_disparo
+	JMP colisao_rover
+deteta_colisao_disparo:
+	MOV R9, colunas_meteoros
+	MOV R1, [R9 + R8]            ; numero da coluna inicial do meteoro
+	MOV R7, [COLUNA_MISSIL]      ; coluna onde o missil está a ser disparado
+	CMP R1, R7                   ; se a coluna mais a esquerda do meteoro estiver depois da do missil, n há colisão
+	JGT fim_deteta_colisao       ; não há colisão
+	MOV R9, colunas_meteoros
+	MOV R1, [R9 + R8]            ; numero da coluna inicial do meteoro
+	MOV R2, LARGURA_METEORO_5    ; largura do meteoro
+	SUB R2, 1
+	ADD R2, R1                   ; coluna onde o meteoro termina
+	CMP R2, R7                   ; se a coluna mais a direita onde o meteoro estiver antes da do missil, nao há colisão
+	JLT fim_deteta_colisao
+	MOV R7, [LINHA_MISSIL]
+	MOV R9, linhas_meteoros
+	MOV R1, [R9 + R8]            ; numero da linha inicial do meteoro
+	MOV R2, ALTURA_METEORO_5     ; altura do meteoro
+	SUB R2, 1
+	ADD R2, R1                   ; linha inferior do meteoro
+	CMP R2, R7
+	JLT fim_deteta_colisao
+	JMP colisao_disparo
+fim_deteta_colisao:
+	POP R11
+	;POP R10
+	POP R9
+	POP R8
+	POP R7
+	POP R6
+	POP R5
+	POP R4
+	POP R3
+	POP R2
+	POP R1
+	RET
+	
+	
+colisao_rover:                ; o que fazer quando o objeto colide
+	MOV R9, houve_colisao
+	MOV R11, 1
+	MOV [R9 + R8], R11
+	
+	MOV R9, linhas_meteoros
+	MOV R1, [R9 + R8]
+	MOV R9, colunas_meteoros
+	MOV R2, [R9 + R8]
+	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
+	CALL apaga_objeto
+	MOV R11, DEF_METEOROS_BONS
+	CMP R10, R11
+	JZ colisao_meteoro_bom
+	JMP colisao_meteoro_mau
+colisao_meteoro_bom:
+	MOV [colisao_boa], R11
+	
+colisao_meteoro_mau:          ;há de ser game over
+	
+fim_colisao_rover:
+	MOV R9, colunas_meteoros
+	MOV R2, [R9 + R8]
+	JMP fim_deteta_colisao
+	
+colisao_disparo:
+	MOV R3, 1
+	MOV [HOUVE_EXPLOSAO], R3     ; avisa o procedimento missil que houve uma explosao
+	MOV R9, linhas_meteoros
+	MOV R1, [R9 + R8]
+	MOV R9, colunas_meteoros
+	MOV R2, [R9 + R8]
+	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
+	CALL apaga_objeto            ; apaga o meteoro
+	MOV R1, [LINHA_MISSIL]
+	MOV R2, [COLUNA_MISSIL]
+	MOV R4, DEF_MISSIL
+	CALL apaga_objeto            ; apaga o missil
+	MOV R1, MAX_LINHA
+	MOV [LINHA_MISSIL], R1
+	
+	MOV R9, linhas_meteoros
+	MOV R1, [R9 + R8]
+	MOV R9, colunas_meteoros
+	MOV R2, [R9 + R8]
+	MOV R4, DEF_EXPLOSAO
+	CALL desenha_objeto
+	MOV R11, DEF_METEOROS_MAUS
+	CMP R10, R11
+	JZ colisao_disparo_meteoro_mau
+	MOV R10, DEF_EXPLOSAO
+	JMP fim_deteta_colisao
+colisao_disparo_meteoro_mau:
+	; diminuir energia
+	MOV R10, DEF_EXPLOSAO
+	JMP fim_deteta_colisao
+	
 	
 	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	; Processo
@@ -818,8 +1039,13 @@ ciclo_explosao:
 	PROCESS SP_inicial_missil    ; indicação de que a rotina que se segue é um processo, 
 	; com indicação do valor para inicializar o SP
 missil:                       ; processo que implementa o comportamento do boneco
+	MOV R3, 0
+	MOV [HOUVE_EXPLOSAO], R3
+	MOV R1, MAX_LINHA            ; linha do missil
+	MOV [LINHA_MISSIL], R1       ; atualiza a variavel linha missil
 	MOV R3, [missil_disparado]   ; lê o LOCK e bloqueia até o missil ser disparado
 	; desenha missil na sua posição inicial
+	
 	MOV R1, LINHA_INICIAL_ROVER  ; linha do missil
 	SUB R1, 1                    ; para começar em cima do rover
 	MOV [LINHA_MISSIL], R1       ; atualiza a variavel linha missil
@@ -1108,7 +1334,7 @@ desenha_pixels:               ; desenha os pixels do objeto a partir da tabela
 	ADD R1, 1
 	SUB R6, 1                    ; menos uma linha para percorrer
 	JNZ obtem_largura_desenha    ; continua até percorrer toda a altura do objeto
-	MOV R9, ECRA_METEORO
+	MOV R9, ECRA_METEORO_MAU
 	MOV [SELECIONA_ECRA_VISUALIZADO], R9
 	POP R9
 	POP R8
@@ -1304,126 +1530,3 @@ rot_int_energia:
 	MOV [dimui_energia_a_jogar], R1 ; desbloqueia processo display (qualquer registo serve)
 	POP R1
 	RFE
-	
-	
-	
-	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	; deteta_colisão - > Deteta se existe colisão entre o rover e um meteoro (bom )
-	; Argumentos:
-	;
-	;
-	;
-	; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-	
-deteta_colisao_rover_meteoro:
-	PUSH R1
-	PUSH R2
-	PUSH R3
-	PUSH R4
-	PUSH R5
-	PUSH R6
-	PUSH R7
-	PUSH R11
-nao_colisao_cima:
-	MOV R1, [LINHA_METEORO]      ; numero da linha inicial do meteoro
-	MOV R2, ALTURA_METEORO_5     ; altura do meteoro
-	SUB R2, 1
-	ADD R2, R1                   ; linha inferior do meteoro
-	MOV R3, [LINHA_ROVER]        ; linha inicial do rover
-	MOV R4, ALTURA_ROVER         ; altura do Rover
-	;SUB R3, R4 ; linha superior do Rover
-	CMP R2, R3                   ; se a linha inferior do meteoro for superior à linha mais acima do Rover, não colidem nesta situacao
-	JLT deteta_colisao_disparo
-nao_colisao_lados:
-	MOV R1, [COLUNA_METEORO]     ; numero da coluna inicial do meteoro
-	MOV R2, LARGURA_METEORO_5    ; largura do meteoro
-	SUB R2, 1
-	ADD R2, R1                   ; coluna onde o meteoro termina
-	MOV R3, [COLUNA_ROVER]       ; coluna onde o rover se encontra
-	MOV R4, LARGURA_ROVER        ; largura do Rover
-	SUB R4, 1
-	ADD R4, R3                   ; coluna onde o rover termina
-nao_colisao_direita:
-	CMP R1, R4
-	JGT deteta_colisao_disparo
-nao_colisao_esquerda:
-	CMP R3, R2
-	JGT deteta_colisao_disparo
-	JMP colisao_rover
-deteta_colisao_disparo:
-	MOV R1, [COLUNA_METEORO]     ; numero da coluna inicial do meteoro
-	MOV R7, [COLUNA_MISSIL]      ; coluna onde o missil está a ser disparado
-	CMP R1, R7                   ; se a coluna mais a esquerda do meteoro estiver depois da do missil, n há colisão
-	JGT fim_deteta_colisao       ; não há colisão
-	MOV R1, [COLUNA_METEORO]     ; numero da coluna inicial do meteoro
-	MOV R2, LARGURA_METEORO_5    ; largura do meteoro
-	SUB R2, 1
-	ADD R2, R1                   ; coluna onde o meteoro termina
-	CMP R2, R7                   ; se a coluna mais a direita onde o meteoro estiver antes da do missil, nao há colisão
-	JLT fim_deteta_colisao
-	MOV R7, [LINHA_MISSIL]
-	MOV R1, [LINHA_METEORO]      ; numero da linha inicial do meteoro
-	MOV R2, ALTURA_METEORO_5     ; altura do meteoro
-	SUB R2, 1
-	ADD R2, R1                   ; linha inferior do meteoro
-	CMP R2, R7
-	JLT fim_deteta_colisao
-	JMP colisao_disparo
-fim_deteta_colisao:
-	POP R11
-	POP R7
-	POP R6
-	POP R5
-	POP R4
-	POP R3
-	POP R2
-	POP R1
-	RET
-	
-	
-colisao_rover:                ; o que fazer quando o objeto colide
-	MOV R11, 1
-	MOV [HOUVE_COLISAO], R11
-	
-	MOV R1, [LINHA_METEORO]
-	MOV R2, [COLUNA_METEORO]
-	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
-	CALL apaga_objeto
-	MOV R11, DEF_METEOROS_BONS
-	CMP R10, R11
-	JZ colisao_meteoro_bom
-	JMP colisao_meteoro_mau
-colisao_meteoro_bom:
-	MOV [colisao_boa], R11
-	
-colisao_meteoro_mau:          ;há de ser game over
-	
-fim_colisao_rover:
-	MOV R2, [COLUNA_METEORO]
-	MOV [ANTIGA_COLUNA_METEORO], R2
-	JMP fim_deteta_colisao
-	
-colisao_disparo:
-	MOV R3, 1
-	MOV [HOUVE_EXPLOSAO], R3     ; avisa o procedimento missil que houve uma explosao
-	MOV R1, [LINHA_METEORO]
-	MOV R2, [COLUNA_METEORO]
-	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
-	CALL apaga_objeto            ; apaga o meteoro
-	MOV R1, [LINHA_MISSIL]
-	MOV R2, [COLUNA_MISSIL]
-	MOV R4, DEF_MISSIL
-	CALL apaga_objeto            ; apaga o missil
-	MOV R1, [LINHA_METEORO]
-	MOV R2, [COLUNA_METEORO]
-	MOV R4, DEF_EXPLOSAO
-	CALL desenha_objeto
-	MOV R11, DEF_METEOROS_MAUS
-	CMP R10, R11
-	JZ colisao_disparo_meteoro_mau
-	MOV R10, DEF_EXPLOSAO
-	JMP fim_deteta_colisao
-colisao_disparo_meteoro_mau:
-	; diminuir energia
-	MOV R10, DEF_EXPLOSAO
-	JMP fim_deteta_colisao
