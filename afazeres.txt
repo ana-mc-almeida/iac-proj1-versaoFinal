@@ -1,10 +1,5 @@
 fundos (começar, suspender/continuar e terminar o jogo)
 
-quando recomeça do C a partir do D precisa de voltar com o meteoro para cima
-quando recomeça do C a partir do D precisa de voltar com o missil para cima
-
-missil está a matar quando passa 1 casa do lado direito do meteoro
-
 
 Perde quando:
     colisao meteoro missel / rover
@@ -17,6 +12,11 @@ SE HOUVER TEMPO:
 
 
 
+
+SE HOUVER TEMPO:
+    alterar imagens de fundo
+
+
 JÁ FEITO:
     displays de hexadecimal para decimal
     diminuir display em 5% de 3 em 3 segundos
@@ -24,3 +24,16 @@ JÁ FEITO:
     teclado a detetar todas as teclas com processos enquanto cai um meteoro ---> como tinhamos + como eles fizeram + adicionar sempre 1 à tecla que já tinhamos 
     escolhar pseudoaleatorias
     desenhar o meteoro no seu propio ecra de pixeis
+
+    missil está a matar quando passa 1 casa do lado direito do meteoro
+
+
+    quando recomeça do C a partir do D precisa de voltar com o meteoro para cima
+    quando recomeça do C a partir do D precisa parar o meteoro
+
+    as vezes aparem umas cenas cinzentas não sei bem porquê
+
+
+    colisoes 4 meteoros
+
+    adicionar sons
