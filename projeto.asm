@@ -311,7 +311,7 @@ JOGO: WORD MODO
 	
 RECOMECAR_ROVER: WORD ATIVO
 RECOMECAR_MISSIL: WORD ATIVO
-RECOMECAR_METEOROS: 
+RECOMECAR_METEOROS:
 	WORD ATIVO
 	WORD ATIVO
 	WORD ATIVO
@@ -516,7 +516,7 @@ recomeca_jogo:
 	MOV R11, 1                   ; inicializa o contador
 	MOV [RECOMECAR_ROVER], R11
 	MOV [RECOMECAR_MISSIL], R11
-
+	
 	MOV R1, N_METEOROS
 loop_reinicia_meteoros:
 	SUB R1, 1
@@ -706,10 +706,10 @@ meteoro:                      ; processo que implementa o comportamento do bonec
 	
 	MOV R8, R1                   ; confirmar se pode ser R8
 	SHL R8, 1
-
+	
 	MOV R9, meteoro_SP_tab
 	MOV SP, [R9 + R8]
-
+	
 	MOV R9, houve_colisao
 	MOV R1, 0
 	MOV [R9 + R8], R1
@@ -980,9 +980,10 @@ colisao_rover:                ; o que fazer quando o objeto colide
 	MOV R9, colunas_meteoros
 	MOV R2, [R9 + R8]
 	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
-	CALL apaga_objeto
+	CALL apaga_objeto            ; apaga meteoro
+	
 	MOV R11, DEF_METEOROS_BONS
-	CMP R10, R11
+	CMP R10, R11                 ; verifica qual é o tipo de meteoro
 	JZ colisao_meteoro_bom
 	JMP colisao_meteoro_mau
 colisao_meteoro_bom:
@@ -1002,7 +1003,16 @@ colisao_disparo:
 	MOV R1, [R9 + R8]
 	MOV R9, colunas_meteoros
 	MOV R2, [R9 + R8]
-	MOV R4, DEF_METEORO_MAU_5    ; para apagar apenas importa a altura e o ecrã, não é necessário distinguir entre meteoros
+
+	MOV R11, DEF_METEOROS_MAUS
+	CMP R10, R11
+	JNZ obtem_altura_meteoro_bom
+obtem_altura_meteoro_mau:
+	MOV R4, DEF_METEORO_MAU_5    
+	JMP apagar_objetos_apos_colisao
+obtem_altura_meteoro_bom:
+	MOV R4, DEF_METEORO_BOM_5 
+apagar_objetos_apos_colisao:
 	CALL apaga_objeto            ; apaga o meteoro
 	MOV R1, [LINHA_MISSIL]
 	MOV R2, [COLUNA_MISSIL]
