@@ -6,29 +6,30 @@ Perde quando:
     energia chega a 0
 
 
-
 verificar se a energia chega a 0
 
+
 SE HOUVER TEMPO:
-    adicionar sons
     alterar imagens de fundo
 
+
 JÁ FEITO:
+    displays de hexadecimal para decimal
+    diminuir display em 5% de 3 em 3 segundos
 
-displays de hexadecimal para decimal
-diminuir display em 5% de 3 em 3 segundos
+    teclado a detetar todas as teclas com processos enquanto cai um meteoro ---> como tinhamos + como eles fizeram + adicionar sempre 1 à tecla que já tinhamos 
+    escolhar pseudoaleatorias
+    desenhar o meteoro no seu propio ecra de pixeis
 
-teclado a detetar todas as teclas com processos enquanto cai um meteoro ---> como tinhamos + como eles fizeram + adicionar sempre 1 à tecla que já tinhamos 
-escolhar pseudoaleatorias
-desenhar o meteoro no seu propio ecra de pixeis
-
-missil está a matar quando passa 1 casa do lado direito do meteoro
-
-
-quando recomeça do C a partir do D precisa de voltar com o meteoro para cima
-quando recomeça do C a partir do D precisa parar o meteoro
-
-as vezes aparem umas cenas cinzentas não sei bem porquê
+    missil está a matar quando passa 1 casa do lado direito do meteoro
 
 
-colisoes 4 meteoros
+    quando recomeça do C a partir do D precisa de voltar com o meteoro para cima
+    quando recomeça do C a partir do D precisa parar o meteoro
+
+    as vezes aparem umas cenas cinzentas não sei bem porquê
+
+
+    colisoes 4 meteoros
+
+    adicionar sons
