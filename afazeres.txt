@@ -6,10 +6,10 @@ Perde quando:
     energia chega a 0
 
 
+
 verificar se a energia chega a 0
 
 SE HOUVER TEMPO:
-    as vezes aparem umas cenas cinzentas não sei bem porquê
     adicionar sons
     alterar imagens de fundo
 
@@ -29,3 +29,6 @@ quando recomeça do C a partir do D precisa de voltar com o meteoro para cima
 quando recomeça do C a partir do D precisa parar o meteoro
 
 as vezes aparem umas cenas cinzentas não sei bem porquê
+
+
+colisoes 4 meteoros
