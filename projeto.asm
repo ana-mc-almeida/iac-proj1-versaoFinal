@@ -52,6 +52,17 @@
 	FUNDO_GAME_OVER_ENERGIA EQU 3
 	FUNDO_GAME_OVER_COLISAO EQU 4
 	FUNDO_JOGO_TERMINADO EQU 5
+
+
+	SOM_INICIO EQU 0				; done
+	SOM_EXPLOSAO EQU 1				; maybe
+	SOM_MENU EQU 2					; done
+	SOM_DISPARO_MISSIL EQU 3 			; done
+	SOM_DESTROI_INIMIGO EQU 4			; maybe
+	SOM_APROVEITA_ENERGIA EQU 5			; maybe
+	SOM_SEM_ENERGIA EQU 6				; falta parte Mafalda
+	SOM_PERDE_COLISAO EQU 7				; maybe
+
 	
 	LINHA_BONECO_0 EQU 4         ; linha do boneco 0
 	LINHA_BONECO_1 EQU 12        ; linha do boneco 1
@@ -442,6 +453,7 @@ loop_meteoros:
 	
 	MOV R1, FUNDO_INICIO         ; cenário de fundo número 0
 	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
+	MOV [SELECIONA_SOM], R1 
 	
 obtem_tecla:
 	MOV R1, [tecla_carregada]    ; bloqueia neste LOCK até uma tecla ser carregada
@@ -471,12 +483,15 @@ testa_D:
 	JNZ obtem_tecla
 	MOV R1, FUNDO_PAUSA          ; cenário de fundo número 0
 	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
+	MOV [SELECIONA_SOM], R1					; o numero do ecra e do som é o mesmo
 	MOV R2, 2
 	MOV [JOGO], R2
 	JMP obtem_tecla              ; processo do programa principal nunca termina
 sai_de_pausa:
 	MOV R1, FUNDO_A_JOGAR        ; cenário de fundo número 0
 	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona o cenário de fundo
+	MOV R1, SOM_MENU
+	MOV [SELECIONA_SOM], R1
 	MOV R2, 1
 	MOV [JOGO], R2
 	JMP obtem_tecla
@@ -800,6 +815,8 @@ meteoro_colidiu:
 meteoro_explodiu:
 	CALL reinicia_meteoro
 	MOV [explodiu], R10
+	MOV R5, SOM_DESTROI_INIMIGO
+	MOV [SELECIONA_SOM], R5
 	JMP fim_desce_meteoro
 fim_desce_meteoro:
 	POP R9
@@ -1054,6 +1071,8 @@ missil:                       ; processo que implementa o comportamento do bonec
 	MOV R1, MAX_LINHA            ; linha do missil
 	MOV [LINHA_MISSIL], R1       ; atualiza a variavel linha missil
 	MOV R3, [missil_disparado]   ; lê o LOCK e bloqueia até o missil ser disparado
+	MOV R2, SOM_EXPLOSAO							; ver se funciona
+	MOV [SELECIONA_SOM], R2
 	; desenha missil na sua posição inicial
 	
 	MOV R1, LINHA_INICIAL_ROVER  ; linha do missil
