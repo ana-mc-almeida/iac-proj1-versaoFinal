@@ -91,9 +91,10 @@
 	ALTURA_MISSIL EQU 1
 	
 	ECRA_ROVER EQU 0             ; ecrã especificado para o Rover
-	ECRA_METEORO EQU 1           ; ecrã especificado para o Meteoro
-	ECRA_EXPLOSAO EQU 2
-	ECRA_MISSIL EQU 1
+	ECRA_METEORO_MAU EQU 1           ; ecrã especificado para o Meteoro
+	ECRA_METEORO_BOM EQU 2           ; ecrã especificado para o Meteoro
+	ECRA_MISSIL EQU 3
+	ECRA_EXPLOSAO EQU 4
 	
 	N_METEOROS EQU 4             ; número de meteoros (máximo 4)
 	
@@ -181,14 +182,14 @@ DEF_ROVER:                    ; tabela que define o Rover (cor, largura, pixels)
 	WORD 0, COR_AMARELA, 0, COR_AMARELA, 0
 	
 DEF_METEORO_INICIO_1:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU            ; ecrã do meteoro
 	WORD LARGURA_METEORO_1       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_1        ; altura do Meteoro Mau
 	WORD COR_CINZENTO
 	WORD COR_CINZENTO
 	
 DEF_METEORO_INICIO_2:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU            ; ecrã do meteoro
 	WORD LARGURA_METEORO_2       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_2        ; altura do Meteoro Mau
 	WORD COR_CINZENTO, COR_CINZENTO
@@ -196,7 +197,7 @@ DEF_METEORO_INICIO_2:
 	
 	
 DEF_METEORO_BOM_3:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_BOM            ; ecrã do meteoro
 	WORD LARGURA_METEORO_3       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_3        ; altura do Meteoro Mau
 	WORD 0, COR_VERDE, 0
@@ -204,7 +205,7 @@ DEF_METEORO_BOM_3:
 	WORD 0, COR_VERDE, 0
 	
 DEF_METEORO_BOM_4:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_BOM            ; ecrã do meteoro
 	WORD LARGURA_METEORO_4       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_4        ; altura do Meteoro Mau
 	WORD 0, COR_VERDE, COR_VERDE, 0
@@ -213,7 +214,7 @@ DEF_METEORO_BOM_4:
 	WORD 0, COR_VERDE, COR_VERDE, 0
 	
 DEF_METEORO_BOM_5:            ; tabela que define o meteoro mau (cor, largura, pixels)
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_BOM            ; ecrã do meteoro
 	WORD LARGURA_METEORO_5       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_5
 	WORD 0, COR_VERDE, COR_VERDE, COR_VERDE, 0
@@ -223,7 +224,7 @@ DEF_METEORO_BOM_5:            ; tabela que define o meteoro mau (cor, largura, p
 	WORD 0, COR_VERDE, COR_VERDE, COR_VERDE, 0
 	
 DEF_METEORO_MAU_3:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU            ; ecrã do meteoro
 	WORD LARGURA_METEORO_3       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_3        ; altura do Meteoro Mau
 	WORD COR_VERMELHA, 0, COR_VERMELHA
@@ -231,7 +232,7 @@ DEF_METEORO_MAU_3:
 	WORD COR_VERMELHA, 0, COR_VERMELHA
 	
 DEF_METEORO_MAU_4:
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU            ; ecrã do meteoro
 	WORD LARGURA_METEORO_4       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_4        ; altura do Meteoro Mau
 	WORD COR_VERMELHA, 0, 0, COR_VERMELHA
@@ -240,7 +241,7 @@ DEF_METEORO_MAU_4:
 	WORD COR_VERMELHA, 0, 0, COR_VERMELHA
 	
 DEF_METEORO_MAU_5:            ; tabela que define o meteoro mau (cor, largura, pixels)
-	WORD ECRA_METEORO            ; ecrã do meteoro
+	WORD ECRA_METEORO_MAU            ; ecrã do meteoro
 	WORD LARGURA_METEORO_5       ; largura do Meteoro Mau
 	WORD ALTURA_METEORO_5        ; altura do Meteoro Mau
 	WORD COR_VERMELHA, 0, 0, 0, COR_VERMELHA
@@ -840,7 +841,7 @@ ciclo_explosao:
 	ADD R5, 1
 	CMP R5, 4
 	JNZ ciclo_explosao
-	MOV R2, 2
+	MOV R2, ECRA_EXPLOSAO
 	MOV [APAGA_PIXEIS], R2       ; apaga todos os pixels do ecra
 	JMP explosao
 	
